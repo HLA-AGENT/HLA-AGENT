@@ -1,0 +1,132 @@
+HOW-TO make SIM_AGENT movies
+Author: Michael Lees mhl@cs.nott.ac.uk
+Some of the code listed here has been modified from code provided by Aaron 
+Sloman.
+----------------------------
+
+Overview....
+
+1. Setup SIM_AGENT program to take snaps of window every n cycles
+2. Duplicate frames so the movie doesn't run too fast
+3. Encode the actual mpeg
+4. Test the new mpeg
+
+
+1. Setup SIM_AGENT program to take snaps of window every n cycles...
+--------------------------------------------------------------------
+
+The easiest way I've found of doing this is....
+
+-----<CUT HERE>-----
+
+;;; Number of cycle between each snapshot (1=image every cycle false=no 
+;;; pics)
+vars team_dump_images = 1;
+
+;;; First part of filename output (ie., will output pic1.yuv, pic99.yuv)
+vars team_dump_file = "pic";
+
+
+define vars procedure sim_scheduler_pausing_trace(objects, cycle);
+    lvars objects, cycle;
+    ;;; code for dumping a snapshot every team_dump_images cycles
+    
+    if isinteger(team_dump_images) and cycle mod team_dump_images == 0 
+	then
+    	   sysobey('import -window "Window Name" -silent ' >< 
+	   gensym(team_dump_file)><'.yuv');
+    endif;    
+enddefine;
+
+
+---<END OF CODE>----
+
+If you put the above in a SIM_AGENT program then when you run the program 
+you should end up with pic1.yuv - picn.yuv (where the simulation runs for 
+n cycles) in the same directory.
+
+
+2. Duplicate frames so the movie doesn't run too fast.....
+----------------------------------------------------------
+This is a bit of a hack but mpeg_encode doesn't seem to allow you to 
+specify how long each frame should last for. This isn't too bad as 
+included with this file you should find a shell script 
+fake_more_frames.sh. This takes 2 arguments the first is how many original 
+frames you have. The second indicates how many times you want each frame 
+to be duplicated. For example if you did...
+
+./fake_more_frames 500 3
+
+This would indicate you originally produced 500 images and you want each 
+one duplicated 3 times, so resulting in 1500 frames where frame 1-3 is the 
+same frame repeated three times. Now when you look in the directory you 
+should see links named link1.yuv to linkm.yuv (m=n*d, n=number of original 
+images, d=duplications). Using the example above you would see link1.yuv to 
+link1500.yuv.
+
+
+3. Encode the actual mpeg...
+----------------------------
+You could use any software here as long as it recognised the picture 
+format used. mpeg_encode is available free and included on most linux 
+distros. Before encoding the mpeg we need to create and parameter file for 
+mpeg_encode.
+
+(NB: The below example is included with this file as mpg.par)
+
+----<START PARAM AFTER THIS LINE>-----
+
+PIXEL FULL
+FORCE_ENCODE_LAST_FRAME
+RANGE 1
+IQSCALE 11
+BQSCALE 11
+PQSCALE 11
+PSEARCH_ALG LOGARITHMIC
+SLICES_PER_FRAME 1
+INPUT_CONVERT *
+REFERENCE_FRAME ORIGINAL
+BSEARCH_ALG SIMPLE
+YUV_SIZE 400x400
+GOP_SIZE 1
+PATTERN IBBPBBPBBPBBPB
+OUTPUT test.mpg
+INPUT_DIR /home/me/images/
+INPUT
+link*.yuv [1-1500]
+END_INPUT
+BASE_FILE_FORMAT YUV
+
+----<END PARAM ABOVE THIS LINE>-----
+
+
+You can change as much as you want (see mpeg_encode man page) but the minimal 
+changes are
+
+(a).   YUV_SIZE - should be same as the size of SIM_AGENT window
+(b).   OUTPUT - output name of mpg we're going to create
+(c).   INPUT_DIR - Location of links we made in step 2
+(d).   [1-1500]  - Should be [1-m] when m is the number of links made is 2.
+
+Once you've changed values appropriately do....
+
+mpeg_encode mpg.par 
+
+(where mpg.par is the name of the parameter file)
+
+
+4.  Test the new mpeg.....
+---------------------------
+Open up the mpeg in any video software. 
+
+plaympeg test.mpg will work for linux.
+
+
+
+
+-------------------------
+oOo mhl@cs.nott.ac.uk oOo
+
+
+
+

@@ -1,0 +1,284 @@
+** [Starting run number:  1]
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [Tileworld probability:  0.8]
+** [The actors in the run were [agent1 agent3 agent2]]
+** [The detailed actors are [<tile_agent: agent2> <tile_agent: agent3>
+	<tileworld: agent1>]]
+** [********]
+** [actor name : agent2]
+** [Number of accesses made by agent2 : 58211]
+** [Number of updates made by agent2 : 104]
+** [********]
+** [********]
+** [actor name : agent3]
+** [Number of accesses made by agent3 : 52978]
+** [Number of updates made by agent3 : 94]
+** [********]
+** [********]
+** [actor name : agent1]
+** [Number of accesses made by agent1 : 65394]
+** [Number of updates made by agent1 : 474]
+** [********]
+** [Starting run number:  2]
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [Tileworld probability:  0.8]
+** [The actors in the run were [agent6 agent4 agent5]]
+** [The detailed actors are [<tile_agent: agent6> <tile_agent: agent5>
+	<tileworld: agent4>]]
+** [********]
+** [actor name : agent5]
+** [Number of accesses made by agent5 : 58261]
+** [Number of updates made by agent5 : 80]
+** [********]
+** [********]
+** [actor name : agent4]
+** [Number of accesses made by agent4 : 64782]
+** [Number of updates made by agent4 : 474]
+** [********]
+** [********]
+** [actor name : agent6]
+** [Number of accesses made by agent6 : 56638]
+** [Number of updates made by agent6 : 82]
+** [********]
+** [Starting run number:  3]
+** [about to draw the tileworld <true>]
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+
+============== Finished. Cycle 100 ============
+** [Tileworld probability:  0.8]
+** [The actors in the run were [agent9 agent7 agent8]]
+** [The detailed actors are [<tile_agent: agent9> <tile_agent: agent8>
+	<tileworld: agent7>]]
+** [********]
+** [actor name : agent8]
+** [Number of accesses made by agent8 : 62302]
+** [Number of updates made by agent8 : 94]
+** [********]
+** [********]
+** [actor name : agent7]
+** [Number of accesses made by agent7 : 66371]
+** [Number of updates made by agent7 : 484]
+** [********]
+** [********]
+** [actor name : agent9]
+** [Number of accesses made by agent9 : 57102]
+** [Number of updates made by agent9 : 74]
+** [********]
+** [Starting run number:  4]
+** [about to draw the tileworld <true>]
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+
+============== Finished. Cycle 100 ============
+** [Tileworld probability:  0.8]
+** [The actors in the run were [agent12 agent11 agent10]]
+** [The detailed actors are [<tile_agent: agent12> <tile_agent: agent11>
+	<tileworld: agent10>]]
+** [********]
+** [actor name : agent10]
+** [Number of accesses made by agent10 : 69061]
+** [Number of updates made by agent10 : 498]
+** [********]
+** [********]
+** [actor name : agent11]
+** [Number of accesses made by agent11 : 60106]
+** [Number of updates made by agent11 : 108]
+** [********]
+** [********]
+** [actor name : agent12]
+** [Number of accesses made by agent12 : 63254]
+** [Number of updates made by agent12 : 94]
+** [********]
+** [Starting run number:  5]
+** [about to draw the tileworld <true>]
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+
+============== Finished. Cycle 100 ============
+** [Tileworld probability:  0.8]
+** [The actors in the run were [agent13 agent15 agent14]]
+** [The detailed actors are [<tile_agent: agent14> <tile_agent: agent15>
+	<tileworld: agent13>]]
+** [********]
+** [actor name : agent14]
+** [Number of accesses made by agent14 : 54449]
+** [Number of updates made by agent14 : 20]
+** [********]
+** [********]
+** [actor name : agent15]
+** [Number of accesses made by agent15 : 55567]
+** [Number of updates made by agent15 : 82]
+** [********]
+** [********]
+** [actor name : agent13]
+** [Number of accesses made by agent13 : 67961]
+** [Number of updates made by agent13 : 478]
+** [********]
+** [Starting run number:  6]
+** [about to draw the tileworld <true>]
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+
+============== Finished. Cycle 100 ============
+** [Tileworld probability:  0.8]
+** [The actors in the run were [agent16 agent18 agent17]]
+** [The detailed actors are [<tile_agent: agent18> <tile_agent: agent17>
+	<tileworld: agent16>]]
+** [********]
+** [actor name : agent17]
+** [Number of accesses made by agent17 : 56898]
+** [Number of updates made by agent17 : 96]
+** [********]
+** [********]
+** [actor name : agent18]
+** [Number of accesses made by agent18 : 54357]
+** [Number of updates made by agent18 : 104]
+** [********]
+** [********]
+** [actor name : agent16]
+** [Number of accesses made by agent16 : 67537]
+** [Number of updates made by agent16 : 488]
+** [********]
+** [Starting run number:  7]
+** [about to draw the tileworld <true>]
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+
+============== Finished. Cycle 100 ============
+** [Tileworld probability:  0.8]
+** [The actors in the run were [agent20 agent19 agent21]]
+** [The detailed actors are [<tile_agent: agent20> <tile_agent: agent21>
+	<tileworld: agent19>]]
+** [********]
+** [actor name : agent21]
+** [Number of accesses made by agent21 : 55106]
+** [Number of updates made by agent21 : 122]
+** [********]
+** [********]
+** [actor name : agent19]
+** [Number of accesses made by agent19 : 69483]
+** [Number of updates made by agent19 : 500]
+** [********]
+** [********]
+** [actor name : agent20]
+** [Number of accesses made by agent20 : 60432]
+** [Number of updates made by agent20 : 50]
+** [********]
+** [Starting run number:  8]
+** [about to draw the tileworld <true>]
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+
+============== Finished. Cycle 100 ============
+** [Tileworld probability:  0.8]
+** [The actors in the run were [agent23 agent22 agent24]]
+** [The detailed actors are [<tile_agent: agent24> <tile_agent: agent23>
+	<tileworld: agent22>]]
+** [********]
+** [actor name : agent24]
+** [Number of accesses made by agent24 : 60994]
+** [Number of updates made by agent24 : 60]
+** [********]
+** [********]
+** [actor name : agent22]
+** [Number of accesses made by agent22 : 63113]
+** [Number of updates made by agent22 : 464]
+** [********]
+** [********]
+** [actor name : agent23]
+** [Number of accesses made by agent23 : 55209]
+** [Number of updates made by agent23 : 62]
+** [********]
+** [Starting run number:  9]
+** [about to draw the tileworld <true>]
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+
+============== Finished. Cycle 100 ============
+** [Tileworld probability:  0.8]
+** [The actors in the run were [agent25 agent27 agent26]]
+** [The detailed actors are [<tile_agent: agent26> <tile_agent: agent27>
+	<tileworld: agent25>]]
+** [********]
+** [actor name : agent26]
+** [Number of accesses made by agent26 : 64638]
+** [Number of updates made by agent26 : 90]
+** [********]
+** [********]
+** [actor name : agent27]
+** [Number of accesses made by agent27 : 53131]
+** [Number of updates made by agent27 : 94]
+** [********]
+** [********]
+** [actor name : agent25]
+** [Number of accesses made by agent25 : 69039]
+** [Number of updates made by agent25 : 492]
+** [********]
+** [Starting run number:  10]
+** [about to draw the tileworld <true>]
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+
+============== Finished. Cycle 100 ============
+** [Tileworld probability:  0.8]
+** [The actors in the run were [agent30 agent28 agent29]]
+** [The detailed actors are [<tile_agent: agent29> <tile_agent: agent30>
+	<tileworld: agent28>]]
+** [********]
+** [actor name : agent29]
+** [Number of accesses made by agent29 : 54363]
+** [Number of updates made by agent29 : 70]
+** [********]
+** [********]
+** [actor name : agent28]
+** [Number of accesses made by agent28 : 66672]
+** [Number of updates made by agent28 : 478]
+** [********]
+** [********]
+** [actor name : agent30]
+** [Number of accesses made by agent30 : 56918]
+** [Number of updates made by agent30 : 84]
+** [********]
+: ;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+
+;;; WARNING - xtw: X TOOLKIT WARNING (xtRemoveGrab: grabError -- XtRemoveGrab asked to remove a widget not on the list)
+

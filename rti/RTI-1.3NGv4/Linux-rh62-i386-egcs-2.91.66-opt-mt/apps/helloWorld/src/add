@@ -1,0 +1,274 @@
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:// This is bad form - The size of the array is based on a compile
+Country.cpp:// a specific number of elements.  This will do - it's not worth
+Country.cpp:// Non-Class Constant
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:   //-----------------------------------------------------------------
+Country.cpp:   //-----------------------------------------------------------------
+Country.cpp:   this->SetName( name );
+Country.cpp:      this->SetPopulation( atof( populationStr ) );
+Country.cpp:      this->SetPopulation( countryDefaultPopulation ); // default population
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:   //-----------------------------------------------------------------
+Country.cpp:   //-----------------------------------------------------------------
+Country.cpp:   this->SetName( name );
+Country.cpp:   this->SetPopulation( population );
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:   //-----------------------------------------------------------------
+Country.cpp:   //-----------------------------------------------------------------
+Country.cpp:   this->SetName( NULL );
+Country.cpp:   this->SetPopulation( countryDefaultPopulation ); // default population
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:   //-----------------------------------------------------------------
+Country.cpp:   //-----------------------------------------------------------------
+Country.cpp:   this->SetName( NULL );
+Country.cpp:   this->SetPopulation( countryDefaultPopulation ); // default population
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:   //-----------------------------------------------------------------
+Country.cpp:   //-----------------------------------------------------------------
+Country.cpp:      if ( pCountry && pCountry->GetInstanceId() == this->GetInstanceId() )
+Country.cpp:      //-----------------------------------------------------------------
+Country.cpp:      //-----------------------------------------------------------------
+Country.cpp:      Country::ms_extentCardinality = Country::ms_extentCardinality - 1;
+Country.cpp:      //-----------------------------------------------------------------
+Country.cpp:      //-----------------------------------------------------------------
+Country.cpp:         //-----------------------------------------------------------------
+Country.cpp:         //-----------------------------------------------------------------
+Country.cpp:         (void) ms_rtiAmb->deleteObjectInstance( this->GetInstanceId(),
+Country.cpp:                                                 this->GetLastTimePlusLookahead(),
+Country.cpp:         //-----------------------------------------------------------------
+Country.cpp:         //-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:      if ( pCountry && pCountry->GetInstanceId() == objectId ) {
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://     Sets the member data containing the RTI run-time type
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:      //------------------------------------------------------
+Country.cpp:      // Get the RTTI (Meta-Object Protocol MOP) handles
+Country.cpp:      // and thus uses Run-Time Type Identification we must ask the
+Country.cpp:      //------------------------------------------------------
+Country.cpp:      ms_countryTypeId  = ms_rtiAmb->getObjectClassHandle(ms_countryTypeStr);
+Country.cpp:      ms_nameTypeId     = ms_rtiAmb->getAttributeHandle( ms_nameTypeStr,
+Country.cpp:      ms_popTypeId      = ms_rtiAmb->getAttributeHandle( ms_popTypeStr,
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:      //------------------------------------------------------
+Country.cpp:      //------------------------------------------------------
+Country.cpp:      countryAttributes->add( ms_nameTypeId );
+Country.cpp:      countryAttributes->add( ms_popTypeId );
+Country.cpp:      ms_rtiAmb->subscribeObjectClassAttributes( ms_countryTypeId,
+Country.cpp:      ms_rtiAmb->publishObjectClass( ms_countryTypeId,
+Country.cpp:      countryAttributes->empty();
+Country.cpp:      //------------------------------------------------------
+Country.cpp:      //------------------------------------------------------
+Country.cpp:      ms_commTypeId    = ms_rtiAmb->getInteractionClassHandle( ms_commTypeStr );
+Country.cpp:      ms_commMsgTypeId = ms_rtiAmb->getParameterHandle( ms_commMsgTypeStr,
+Country.cpp:      ms_rtiAmb->subscribeInteractionClass( ms_commTypeId );
+Country.cpp:      ms_rtiAmb->publishInteractionClass( ms_commTypeId );
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:      //---------------------------------------------------------
+Country.cpp:      //---------------------------------------------------------
+Country.cpp:         ms_rtiAmb->registerObjectInstance( this->GetCountryRtiId() );
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:   //------------------------------------------------------
+Country.cpp:   //------------------------------------------------------
+Country.cpp:   (*pTime) -= this->GetLastTime();
+Country.cpp:   this->SetLastTime( newTime );
+Country.cpp:   if ( !(pTime->isZero()))
+Country.cpp:      //------------------------------------------------------
+Country.cpp:      //------------------------------------------------------
+Country.cpp:         //------------------------------------------------------
+Country.cpp:         // defined on the Country class - it is not part of the RTI.
+Country.cpp:         //------------------------------------------------------
+Country.cpp:         RTI::AttributeHandleValuePairSet* pNvpSet = this->CreateNVPSet();
+Country.cpp:         //------------------------------------------------------
+Country.cpp:         //------------------------------------------------------
+Country.cpp:         (void) ms_rtiAmb->updateAttributeValues( this->GetInstanceId(),
+Country.cpp:                                                  this->GetLastTimePlusLookahead(), 
+Country.cpp:         pNvpSet->empty();
+Country.cpp:                 //------------------------------------------------------
+Country.cpp:                 // attribute for the benefit of late-arriving federates.
+Country.cpp:                 //------------------------------------------------------
+Country.cpp:         //------------------------------------------------------
+Country.cpp:         //------------------------------------------------------
+Country.cpp:         pParams->add( this->GetMessageRtiId(),
+Country.cpp:            //------------------------------------------------------
+Country.cpp:            //------------------------------------------------------
+Country.cpp:            (void) ms_rtiAmb->sendInteraction( GetCommRtiId(), *pParams,
+Country.cpp:                                               this->GetLastTimePlusLookahead(),
+Country.cpp:         //------------------------------------------------------
+Country.cpp:         //------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://           transfer - the above was a generic statement.
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:         // a problem with different endian-ness of platforms. Either
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:            // a problem with different endian-ness of platforms. Either
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp:      //------------------------------------------------------
+Country.cpp:      //------------------------------------------------------
+Country.cpp:         pCountryAttributes->add( this->GetNameRtiId(),
+Country.cpp:                                  (char*) this->GetName(),
+Country.cpp:                                  ((strlen(this->GetName())+1)*sizeof(char)) );
+Country.cpp:         *((long*)&tmp) = htonl(*(((long*)&this->GetPopulation()) + 1));
+Country.cpp:         *(((long*)&tmp) + 1) = htonl(*((long*)&this->GetPopulation()));
+Country.cpp:         pCountryAttributes->add( this->GetPopulationRtiId(),
+Country.cpp:         double pop = this->GetPopulation();
+Country.cpp:         pCountryAttributes->add( this->GetPopulationRtiId(), 
+Country.cpp:         pCountryAttributes->add( this->GetPopulationRtiId(),
+Country.cpp:                                  (char*) &this->GetPopulation(),
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Country.cpp://-----------------------------------------------------------------
+Binary file Country.o matches
+HelloWorld.cpp:   //------------------------------------------------------
+HelloWorld.cpp:   //------------------------------------------------------
+HelloWorld.cpp:      return -1;
+HelloWorld.cpp:      return -1;
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      HwFederateAmbassador     fedAmb;         // User-defined
+HelloWorld.cpp:      // Named value placeholder for the federates handle -
+HelloWorld.cpp:      // services and MOM might need it - if we were to use them.
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         return -1;
+HelloWorld.cpp:      cout << myCountry->GetName() << " " << tb.time << " " << 
+HelloWorld.cpp:      cout << myCountry->GetName() << " " << tp.tv_sec << " " <<
+HelloWorld.cpp:      cout << myCountry->GetName() << " "
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:            federateId = rtiAmb.joinFederationExecution( myCountry->GetName(),
+HelloWorld.cpp:            cerr << "FED_HW: ERROR: " << myCountry->GetName()
+HelloWorld.cpp:            return -1;
+HelloWorld.cpp:            return -1;
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      // possibly have more than one Run-Time mapping.
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      myCountry->PublishAndSubscribe();
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      myCountry->Register();
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      // This version of HelloWorld operates as a time-stepped
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      // ----------
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      while ( counter++ < numberOfTicks-1 )
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         // 1.) - Update current state
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         myCountry->Update( grantTime );
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         // 2.) - Ask for a time advance.
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:	     //------------------------------------------------------
+HelloWorld.cpp:	     // 2.) - Ask for a next event request advance.
+HelloWorld.cpp:	     //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:         //------------------------------------------------------
+HelloWorld.cpp:            //------------------------------------------------------
+HelloWorld.cpp:            //------------------------------------------------------
+HelloWorld.cpp:      } // 4.) - Repeat
+HelloWorld.cpp:         // Perform last update - this is necessary to give the
+HelloWorld.cpp:         myCountry->Update( grantTime );
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:         return -1;
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:      //------------------------------------------------------
+HelloWorld.cpp:         return -1;
+HelloWorld.cpp:           << "       Exception caught in main() - PROGRAM EXITING.\n"
+HelloWorld.cpp:      return -1;
+HelloWorld.cpp:      return -1;
+helloWorld.mk:############################################################### -*- Makefile -*-
+helloWorld.mk:	-I${HELLOWORLD_INC_DIR} \
+helloWorld.mk:	-I${RTI_INC_DIR}
+helloWorld.mk:	-L${RTI_LIB_DIR}
+helloWorld.mk:	${C++} -c ${C++FLAGS} ${INC_PATH} $< -o $@
+helloWorld.mk:	${C++} ${LDFLAGS} ${OBJS} -o $@ ${LIBS}
+helloWorld.mk:	rm -rf *.o core *~ .depend Templates.DB ${EXECUTABLE}
+Binary file HelloWorld.o matches
+HwFederateAmbassador.cpp://-----------------------------------------------------------------
+HwFederateAmbassador.cpp://-----------------------------------------------------------------
+HwFederateAmbassador.cpp://-----------------------------------------------------------------
+HwFederateAmbassador.cpp://-----------------------------------------------------------------
+HwFederateAmbassador.cpp://-----------------------------------------------------------------
+HwFederateAmbassador.cpp:// Bad C like global variables being externed - bad boy!!!
+HwFederateAmbassador.cpp://-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      // stored in the static extent member data - it will be destructed
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:   //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:   //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      pCountry->Update( theAttributes );
+HwFederateAmbassador.cpp:      pCountry->SetLastTime( theTime );
+HwFederateAmbassador.cpp:   //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:   //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      pCountry->Update( theAttributes );
+HwFederateAmbassador.cpp:      pCountry->SetLastTime(*zero_time );
+HwFederateAmbassador.cpp:   this->receiveInteraction( theInteraction, theParameters, theTag );
+HwFederateAmbassador.cpp:   //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:   //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:   this->removeObjectInstance( theObject, theTag );
+HwFederateAmbassador.cpp:   //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:   //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:      //-----------------------------------------------------------------
+HwFederateAmbassador.cpp:            pCountry->SetPopulation( pCountry->GetPopulation() );
+HwFederateAmbassador.cpp:            pCountry->SetName( pCountry->GetName() );
+Binary file HwFederateAmbassador.o matches
+Makefile:############################################################### -*- Makefile -*-
+Makefile:C++FLAGS = -g -O3
+Makefile:LDFLAGS += -g -O3 \
+Makefile:	${LIB_PATH} -L/usr/i386-glibc21-linux
+Makefile:	-lRTI-NG -lfedtime \
+Makefile:	-lpthread -lrt -ldl
+Makefileold:############################################################### -*- Makefile -*-
+Makefileold:C++FLAGS = -g -O3
+Makefileold:LDFLAGS += -g -O3 \
+Makefileold:	-lRTI-NG -lfedtime \
+Makefileold:	-lpthread

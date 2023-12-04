@@ -1,0 +1,5 @@
+This experiment was performed before the extra accesses were removed
+(ie. those accesses performed by sim_distance during the sensor
+procedure). Therefore the results are somewhat incorrect. The
+experiment only monitored variable access and updates for two
+different size tileworlds.

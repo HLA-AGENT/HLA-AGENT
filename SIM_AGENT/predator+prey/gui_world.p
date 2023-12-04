@@ -1,0 +1,166 @@
+;;; Panel variables
+vars world_create_panel_fields,
+     world_create_panel;
+
+[
+        ;;; Text panel
+        [TEXT {bg 'black'}
+            {fg 'brown'}
+            {gap 0}
+            {margin 5}
+            {align centre} :
+            'Create World']
+
+        ;;; Text panel
+        [TEXT {bg 'black'} {fg 'brown'}
+            {gap 10}
+            {margin 5}
+            {align centre} :
+            'Width']
+
+        ;;; Panel to enter required world width
+        [NUMBERIN
+            {label width_of_world}
+            {align centre}
+            {gap 0}
+            {margin 10}
+            {offset 10}
+            {width 90}
+            {height 10}
+            {font '10x20'}
+            {bg 'blue'}:
+            ^world_width]
+
+        ;;; Text panel
+        [TEXT {bg 'black'} {fg 'brown'}
+            {gap 20}
+            {margin 5}
+            {align centre} :
+            'Height']
+
+        ;;; Panel to enter required world height
+        [NUMBERIN
+            {label height_of_world}
+            {align centre}
+            {gap 0}
+            {margin 10}
+            {offset 10}
+            {width 90}
+            {height 10}
+            {font '10x20'}
+            {bg 'blue'}:
+            ^world_height]
+
+        ;;; Buttons to create and destroy the world
+        [ACTIONS
+            {margin 15}
+            {offset 50}
+            {width 90}
+            {align centre}
+            {gap 0} :
+            ['  CREATE'
+            [POP11 rc_field_item_of_name(world_create_panel,
+                    			 "width_of_world", 1) -> world_width;
+                   rc_field_item_of_name(world_create_panel,
+                    			 "height_of_world", 1) -> world_height;
+                   setup();
+                   true -> world_create;
+		   ]]
+            [' DESTROY'
+            [POP11 killwindows();
+            false -> world_create;]]
+            ]
+
+        ;;; Text panel
+        [TEXT {bg 'black'} {fg 'brown'}
+            {gap 0}
+            {margin 5}
+            {align centre} :
+            'Add Obstacles']
+
+        ;;; Panel to enter the number of obstacles required
+        [NUMBERIN
+            {label number_of_obstacles}
+            {align centre}
+            {gap 0}
+            {margin 10}
+            {offset 10}
+            {width 90}
+            {height 10}
+            {font '10x20'}
+            {bg 'blue'}:
+            0]
+
+        ;;; Buttons to create obstacles
+        [ACTIONS
+            {margin 15}
+            {offset 50}
+            {width 90}
+            {align centre}
+            {gap 0} :
+            ['MANUAL' 
+	     [POP11
+              if world_create = false then return() endif;
+              add_obstacles(rc_field_item_of_name(world_create_panel,
+						  "number_of_obstacles", 1) ,1);
+              ]]
+            ['RANDOM' 
+	     [POP11
+              if world_create = false then return() endif;
+              add_obstacles(rc_field_item_of_name(world_create_panel,
+						  "number_of_obstacles", 1) ,2);
+              ]]]
+
+        ;;; Text panel
+        [TEXT {bg 'black'} {fg 'brown'}
+            {gap 0}
+            {margin 5}
+            {align centre} :
+            'Add Food']
+
+        ;;; Panel to enter number of food objects required
+        [NUMBERIN
+            {label number_of_food}
+            {align centre}
+            {gap 0}
+            {margin 10}
+            {offset 10}
+            {width 90}
+            {height 10}
+            {font '10x20'}
+            {bg 'blue'}:
+            0]
+
+        ;;; Buttons to create food objects
+        [ACTIONS
+            {margin 15}
+            {offset 50} ;;; Horizontal displacement if right or left
+            ;;; button width
+            {width 90}
+            {align centre} {gap 0} :
+            ['MANUAL' [POP11
+            if world_create = false then return() endif;
+            add_food2(
+            rc_field_item_of_name(world_create_panel,"number_of_food", 1),1);
+            ]]
+            ['RANDOM' [POP11
+            if world_create = false then return() endif;
+            add_food2(
+            rc_field_item_of_name(world_create_panel,"number_of_food", 1),2);
+            ]]]
+
+        ;;; Button to close panel
+        [ACTIONS
+            {bg 'black'}
+            {margin 10}
+            {offset 50} ;;; Horizontal displacement if right or left
+            ;;; button width
+            {width 90}
+            {align centre} {gap 0} :
+            ['   CLOSE'
+	     [POP11 delete(world_create_panel,panel_list) -> panel_list;
+              rc_kill_menu(); 0 -> world_flag;
+              ]]
+        ]
+
+]  -> world_create_panel_fields;

@@ -1,0 +1,2163 @@
+/*
+PROCEDURE: show_and_name_instance (obj, name)
+INPUTS   : obj, name
+  Where  :
+    obj is an object (agent or obstacle)
+    name is a word (name of the object)
+OUTPUTS  : NONE
+USED IN  : new_obstacle new_predator new_prey new_food
+CREATED  : Oct 1998  (originally taken from teach sim_feelings)
+PURPOSE  : Draws the object into mainwin, makes it mouse sensitive and then
+           allows the system to use the name of the object to represent it.
+*/
+
+define show_and_name_instance(obj,name);
+
+    mainwin -> rc_current_window_object;
+
+    ;;; Draw the object in mainwin
+    rc_draw_linepic(obj);
+
+    ;;; Make the object mouse sensitive
+    rc_add_pic_to_window(obj, mainwin, true);
+
+    ;;; Make the name useable to identify the object
+    sysVARS(name,0);
+    obj -> valof(name);
+
+enddefine;
+
+/*
+PROCEDURE: new_predator (args) -> pred
+INPUTS   : args is a list of arguments
+OUTPUTS  : pred is a predator agent
+USED IN  : add_predators
+CREATED  : Nov 1998
+PURPOSE  : Creates a new instance of predator_agent from a list in the form
+[x_coordinate  y_coordinate  name  start_energy
+ fullup_limit  hungry_limit  starving_limit
+ attack_range attack_speed]
+TESTS:
+setup();
+new_predator([0 0 pd1 200 350 150 50 400 4]);
+*/
+
+
+define new_predator(args) -> pred;
+
+    ;;; Get agent variables
+    lvars (x,y,name,se,fu,hu,st,ar,as) = explode(args);
+
+    ;;; Instantiate relevant slots
+    instance predator_agent;
+        rc_picx = x;
+        rc_picy = y;
+        sim_name = name;
+        name_list = [[FONT '6x13' {8 -12 ^(name >< nullstring)}]];
+        pic_list = [[COLOUR 'black' WIDTH 2
+                [CLOSED {0 ^(-agent_size-1)} {^(-agent_size-1) 0}
+                        {0 ^(agent_size+1)} {^(agent_size+1) 0}
+                ]]];
+
+        rc_pic_strings = [ [FONT '6x13'{-2 -5 '?'}]
+            [FONT '6x13' {9 -13 ^(name >< nullstring)}]
+        ];
+        rc_pic_lines = [COLOUR 'black' WIDTH 2
+            [CLOSED {0 ^(-agent_size-1)} {^(-agent_size-1) 0}
+                {0 ^(agent_size+1)} {^(agent_size+1) 0}
+            ] ];
+        energy = se;
+        full_up_limit = fu;
+        hunger_limit = hu;
+        starving_limit  = st;
+        predator_attack_range = ar;
+        predator_attack_speed = as;
+
+    endinstance -> pred;
+
+    show_and_name_instance(pred,name);
+
+    ;;; Update global variables to keep track of what is in the world
+    pred::predator_list -> predator_list;
+    1 + predator_count -> predator_count;
+
+enddefine;
+
+
+/*
+PROCEDURE: new_prey (args) -> prey
+INPUTS   : args is a list of arguments
+OUTPUTS  : prey is a prey agent
+USED IN  :
+CREATED  : Nov 1998
+PURPOSE  : Creates a new instance of predator_agent from a list in the form
+[x_coordinate  y_coordinate  name  start_energy
+ fullup_limit  hungry_limit  starving_limit
+ escape_range escape_speed
+ feeding_range feeding_speed
+ flocking_range flocking_speed]
+TESTS:
+setup();
+new_prey([0 0 py1 200 350 100 50 400 4 400 4 400 4]);
+*/
+
+
+define new_prey(args) -> prey;
+
+    ;;; Get agent variables
+    lvars (x,y,name,se,fu,hu,st,er,es,gr,gs,fr,fs) = explode(args);
+
+    ;;; Instantiate relevant slots
+    instance prey_agent;
+        rc_picx = x;
+        rc_picy = y;
+        leader_x = x;
+        leader_y = y;
+        sim_name = name;
+        name_list = [[FONT '6x13' {8 -12 ^(name >< nullstring)}]];
+        pic_list = [[COLOUR ^prey_colour WIDTH 2 [CIRCLE {0 0 ^agent_size}]]];
+
+        rc_pic_strings = [ [FONT '6x13'{-2 -5 '?'}]
+                           [FONT '6x13' {8 -12 ^(name >< nullstring)}]
+                         ];
+        rc_pic_lines = [COLOUR ^prey_colour WIDTH 2 [CIRCLE {0 0 ^agent_size}]];
+
+        energy = se;
+        full_up_limit = fu;
+        hunger_limit = hu;
+        starving_limit  = st;
+        prey_escape_range = er;
+        prey_escape_speed = es;
+        food_sense_range = gr;
+        prey_forage_speed = gs;
+        prey_flocking_speed = fs;
+        prey_flocking_range = fr;
+
+    endinstance -> prey;
+
+    show_and_name_instance(prey,name);
+
+    ;;; Update global variables to keep track of what is in the world
+    prey::prey_list -> prey_list;
+    1 + prey_count -> prey_count;
+
+enddefine;
+
+
+/*
+PROCEDURE: new_obstacle (args) -> obs
+INPUTS   : args is a list of arguments
+OUTPUTS  : obs is an obstacle
+USED IN  : add_obstacles
+CREATED  : Oct 1998
+PURPOSE  : Creates a new instance of obstacle from a list containing a set
+of coordinates and a name.
+TESTS:
+setup();
+new_obstacle([-10 100 test_obstacle]);
+
+*/
+
+define new_obstacle(args) -> obs;
+
+    ;;; Get agent variables
+    lvars (x, y, name) = explode(args);
+
+    ;;; Instantiate relevant slots
+    instance obstacle;
+        rc_picx = x;
+        rc_picy = y;
+        sim_name = name;
+
+        rc_pic_lines = [COLOUR 'black' WIDTH 2 [SQUARE {0 0 ^obstacle_size}]]
+    endinstance -> obs;
+
+    show_and_name_instance(obs,name);
+
+    ;;; Update global variables to keep track of what is in the world
+    obs::obstacle_list -> obstacle_list;
+    1 + obstacle_count -> obstacle_count;
+
+enddefine;
+
+
+/*
+PROCEDURE: new_food (args) -> fd
+INPUTS   : args is a list of arguments
+OUTPUTS  : fd is a food object
+USED IN  : add_food add_food2
+CREATED  : Feb 1999
+PURPOSE  :  Creates a new instance of obstacle from a list containing a set
+of coordinates and a name.
+TESTS:
+setup();
+new_food([0 0 fd1]);
+*/
+
+define new_food(args) -> fd;
+
+    ;;; Get agent variables
+    lvars (x, y, name) = explode(args);
+
+    ;;; Instantiate relevant slots
+    instance food;
+        rc_picx = x;
+        rc_picy = y;
+        sim_name = name;
+        rc_pic_lines = [COLOUR 'green' WIDTH 2
+                        [SQUARE {0 0 ^obstacle_size}]]
+    endinstance -> fd;
+
+
+    show_and_name_instance(fd,name);
+
+    ;;; Update global variables to keep track of what is in the world
+    fd::food_list -> food_list;
+    1 + food_count -> food_count;
+
+enddefine;
+
+
+
+/*
+PROCEDURE: new_world (args) -> wld
+INPUTS   : args is a list of arguments
+OUTPUTS  : wld is a world object
+USED IN  : setup
+CREATED  : Feb 1999
+PURPOSE  : Creates an object to keep track of certain global events.
+TESTS:
+setup();
+sim_world=>
+
+*/
+
+define new_world(args) -> wld;
+
+    ;;; Get agent variables
+    lvars (name) = explode(args);
+
+    ;;; Instantiate relevant slots
+    instance world;
+        sim_name = name;
+    endinstance -> wld;
+
+    ;;; Make the name usable as an identifier
+    sysVARS(name,0);
+    wld -> valof(name);
+
+    ;;; Update global variables to keep track of what is in the world
+    wld::world_list -> world_list;
+
+enddefine;
+
+
+/*
+METHOD   : sim_distance (w, ob) -> dist
+INPUTS   : w, ob
+  Where  :
+    w is a world object
+    ob is a sim_object
+OUTPUTS  : dist is the distance between them
+USED IN  : Sensing an objects environment
+CREATED  : Feb 1999
+PURPOSE  : The world object is everywhere so the distance to it from anywhere
+is 0.
+TESTS:
+setup();
+add_food2(1,2);
+add_obstacles(1,2);
+add_predators(1,2,200,350,150,50,400,4);
+add_prey(1,2,200,350,150,50,100,4,22,2,33,3);
+
+sim_distance(sim_world,fd1)=>
+sim_distance(sim_world,ob1)=>
+sim_distance(sim_world,pd1)=>
+sim_distance(sim_world,py1)=>
+
+sim_distance(fd1,sim_world)=>
+sim_distance(ob1,sim_world)=>
+sim_distance(pd1,sim_world)=>
+sim_distance(py1,sim_world)=>
+*/
+
+define :method sim_distance(w:world, ob:sim_object) -> dist;
+    ;;; Just return 0
+    0 -> dist;
+enddefine;
+
+define :method sim_distance(ob:sim_object,w:world) -> dist;
+    ;;; Just return 0
+    0 -> dist;
+enddefine;
+
+/*
+METHOD   : sim_distance (a1, a2) -> dist
+INPUTS   : a1, a2
+  Where  :
+    a1 is a sim_object
+    a2 is a sim_object
+OUTPUTS  : dist is the distance between them
+USED IN  : Sensing an agents environment
+CREATED  : Nov 1998
+PURPOSE  : calculates the distance between 2 sim_objects
+TESTS:
+setup();
+add_food2(1,2);
+add_obstacles(1,2);
+add_predators(1,2,200,350,150,50,400,4);
+add_prey(1,2,200,350,150,50,100,4,22,2,33,3);
+
+sim_distance(pd1,fd1)=>
+sim_distance(pd1,ob1)=>
+sim_distance(pd1,pd1)=>
+sim_distance(pd1,py1)=>
+*/
+
+define :method sim_distance(ob1:sim_object, ob2:sim_object) -> dist;
+
+    lvars x1 = rc_picx(ob1),
+          y1 = rc_picy(ob1),
+          x2 = rc_picx(ob2),
+          y2 = rc_picy(ob2);
+
+    ;;; Calculate the distance using Pythagoras
+    sqrt((x1-x2)**2 + (y1-y2)**2) -> dist;
+
+enddefine;
+
+
+/*
+PROCEDURE: distance (x1, y1, x2, y2) -> dist
+INPUTS   : x1, y1, x2, y2
+  Where  :
+    x1 is the first x coordinate
+    y1 is the first y coordinate
+    x2 is the second x coordinate
+    y2 is the second y coordinate
+OUTPUTS  : dist is a the distance between the 2 sets of coordinates
+USED IN  : flock_to_a_group head_to_isolated_prey
+CREATED  : Feb 1999
+PURPOSE  : Calculates the distance between 2 sets of coordinates.
+TESTS:
+distance(0,0,200,200)=>
+distance(0,0,-200,-200)=>
+*/
+
+define distance(x1,y1,x2,y2) -> dist;
+    ;;; Calculate the distance using Pythagoras
+    sqrt((x1-x2)**2 + (y1-y2)**2) -> dist;
+enddefine;
+
+
+/*
+METHOD   : in_object (ag, x, y) -> bool
+INPUTS   : ag, x, y
+  Where  :
+    ag is a basic_agent
+    x is an x coord
+    y is a y coord
+OUTPUTS  : bool is a boolean value
+USED IN  : random_search head_to_prey escape_from_predator
+CREATED  : Oct 1998
+PURPOSE  : Check whether a point is within any object within range of an
+agent.
+TESTS:
+setup();
+add_predators(5,2,200,300,3,2,200,4);
+add_obstacles(30,2);
+run_agents(100);
+*/
+
+define :method in_object(ag:basic_agent,x,y) -> bool;
+
+    lvars obstacle_list,predator_list,prey_list,obstacle_position,ob_name,ob;
+    lvars predator_position,prey_position,pd_name,pd,py_name,py;
+
+    visible_obstacles(ag) -> obstacle_list;
+    visible_predators(ag) -> predator_list;
+    visible_prey(ag) -> prey_list;
+
+    ;;; If the agent is a predator, it doesn't want to avoid prey agents
+    if ispredator_agent(ag) then
+        [] -> prey_list;
+    endif;
+
+    ;;;obstacle_list =>
+    ;;;prey_list =>
+
+    ;;; Check to prevent infinite recursion if no object free path is available
+    if recurse_count(ag) > 80 then
+        false -> bool;
+        0 -> recurse_count(ag);
+        return;
+    else
+        recurse_count(ag) + 1 -> recurse_count(ag);
+    endif;
+
+    ;;; Check whether the point is within any of the visible obstacles
+    for obstacle_position in obstacle_list do
+
+        obstacle_position --> ! [?ob_name ==];
+        valof(ob_name) -> ob;
+        if  x >= (rc_picx(ob) - agent_size) and
+            x <= (rc_picx(ob) + agent_size + obstacle_size + 4) and
+            y >= (rc_picy(ob) - agent_size - obstacle_size - 4) and
+            y <= (rc_picy(ob) + agent_size) then
+
+            true -> bool,
+            return();
+        endif;
+
+    endfor;
+
+    ;;; Check whether the point is within any of the visible predators
+    for predator_position in predator_list do
+
+        predator_position --> ! [?pd_name ==];
+        valof(pd_name) -> pd;
+
+        if x >= (rc_picx(pd) - (2 * agent_size) - 2)and
+            x <= (rc_picx(pd) + (2 * agent_size) + 2) and
+            y >= (rc_picy(pd) - (2 * agent_size) - 2) and
+            y <= (rc_picy(pd) + (2 * agent_size) - 2)then
+
+            true -> bool;
+            return();
+        endif;
+
+    endfor;
+
+    ;;; Check whether the point is within any of the visible prey
+    for prey_position in prey_list do
+
+        prey_position --> ! [?py_name ==];
+        valof(py_name) -> py;
+
+        if x >= (rc_picx(py) - (2 * agent_size) - 4)and
+            x <= (rc_picx(py) + (2 * agent_size) + 4) and
+            y >= (rc_picy(py) - (2 * agent_size) - 4) and
+            y <= (rc_picy(py) + (2 * agent_size) + 4) then
+
+            true -> bool;
+            return();
+        endif;
+
+    endfor;
+
+    ;;; If the point is not within anything else, return false
+    false -> bool;
+    ;;; Cancel the recursion count
+    0 -> recurse_count(ag);
+
+enddefine;
+
+/*
+PROCEDURE: check_point (point, axis) -> ch_point
+INPUTS   : point, axis
+  Where  :
+    point is a coordinate
+    axis is either the x or y axis
+OUTPUTS  : ch_point is a coordinate
+USED IN  : move_towards_point
+CREATED  : Nov 1998
+PURPOSE  : Checks whether a point on an axis is within the allowed scope of
+world. If it is not, it corrects it using the model of a torus.
+TESTS: (for a 400x400 world)
+check_point(100,"x")=>
+check_point(-201,"x")=>
+check_point(301,"y")=>
+check_point(-301,"y")=>
+*/
+
+define check_point(point,axis) -> ch_point;
+
+    lvars w_max, w_min, w_size,check_axis;
+
+    axis -> check_axis;
+    ;;; Check which axis the point is to be checked against and assign values
+    ;;; to the variables accordingly.
+    if check_axis == "x" then
+        ;;;'checking x'=>
+        world_width -> w_size,
+        world_width/2 -> w_max,
+        -world_width/2 -> w_min,
+    elseif check_axis == "y" then
+        ;;;'checking y'=>
+        world_height -> w_size,
+        world_height/2 -> w_max,
+        -world_height/2 ->w_min
+    endif;
+
+    ;;; Check whether the point is within the allowed world, and alter if not.
+    if point > w_max then
+        point - w_size -> ch_point
+    elseif point < w_min then
+        point + w_size -> ch_point
+    else
+        point -> ch_point
+    endif;
+
+    ;;;ch_point=>
+
+enddefine;
+
+/*
+PROCEDURE: move_towards_point (old_x, old_y, speed, x, y) -> (new_x, new_y)
+INPUTS   : old_x, old_y, speed, x, y
+  Where  :
+    old_x is a old x coord
+    old_y is a old y coord
+    speed size of move
+    x is the target's x coord
+    y is the target's y coord
+OUTPUTS  : new_x, new_y
+  Where  :
+    new_x is the new x coord
+    new_y is the new y coord
+USED IN  : head_to_isolated_prey flock_boids
+CREATED  : Feb 1999
+PURPOSE  : Takes an old position, a desired position and a speed, and then
+calculates the next coordinates of a move towards the desired position using
+the line equation y=mx+c
+TESTS:
+move_towards_point(0,0,2,0,4)=>
+move_towards_point(0,0,2,4,4)=>
+move_towards_point(0,0,2,4,0)=>
+move_towards_point(0,0,2,4,-4)=>
+move_towards_point(0,0,2,0,-4)=>
+move_towards_point(0,0,2,-4,-4)=>
+move_towards_point(0,0,2,-4,0)=>
+move_towards_point(0,0,2,-4,4)=>
+move_towards_point(10,10,2,0,-150)=>
+*/
+
+define move_towards_point(old_x,old_y,speed,tar_x,tar_y)->(new_x,new_y);
+
+    lvars gradient,const,diff_x,diff_y;
+
+    ;;; If the diff in x coords is 0 then this would produce a /0 later on
+    ;;; therefore calc this case separately
+    if (tar_x - old_x) = 0 then
+        old_x -> new_x;
+        if (tar_y - old_y) > 0  then
+            old_y + speed -> new_y,
+            check_point(new_y,"y") -> new_y;
+        else
+            old_y - speed -> new_y,
+            check_point(new_y,"y") -> new_y;
+        endif;
+        return();
+    endif;
+
+    ;;; Calculate the gradient and constant for the line between the 2 points
+    ;;; Difference in y divided by the difference in x
+    (tar_y - old_y)/(tar_x - old_x) -> gradient;
+    ;;; y - mx = c
+    old_y - (gradient*old_x) -> const;
+
+    ;;; Calculate the new coordinates for all the possible cases
+    if gradient = 0 and tar_x < old_x then
+        old_x - speed -> new_x,
+        old_y -> new_y,
+
+    elseif gradient = 0 and tar_x > old_x then
+        old_x + speed -> new_x,
+        old_y -> new_y,
+
+    elseif tar_x < old_x and gradient > 0 then
+        old_x - speed -> new_x,
+        round((gradient*new_x) + const) -> new_y,
+
+    elseif tar_x < old_x and gradient < 0 then
+        old_x - speed -> new_x,
+        round((gradient*new_x) + const) -> new_y,
+
+    elseif tar_x > old_x and gradient > 0 then
+        old_x + speed -> new_x,
+        round((gradient*new_x) + const) -> new_y,
+
+    elseif tar_x > old_x and gradient < 0 then
+        old_x + speed -> new_x,
+        round((gradient*new_x) + const) -> new_y,
+    endif;
+
+    ;;; Calculate the difference between the old and new coordinates
+    new_x - old_x -> diff_x;
+    new_y - old_y -> diff_y;
+
+    ;;;Prevent large jumps between points (max 5 units)
+    if diff_x > 5 then
+        old_x + 5 -> new_x;
+    elseif diff_x < -5 then
+        old_x - 5 -> new_x;
+    elseif diff_y > 5 then
+        old_y + 5 -> new_y;
+    elseif diff_y < -5 then
+        old_y - 5 -> new_y;
+    endif;
+
+    ;;; Check that the new point is within the world
+    check_point(new_x,"x") -> new_x;
+    check_point(new_y,"y") -> new_y;
+
+enddefine;
+
+
+/*
+PROCEDURE: is_member (target, list) -> bool
+INPUTS   : target, list
+  Where  :
+    target is an element of a list
+    list is a list
+OUTPUTS  : bool is a boolean value
+USED IN  : update_obstacles  update_prey update_predators update_food
+CREATED  : Nov 1998
+PURPOSE  : Returns true if target matches any of the elements of list. There
+is a POP11 procedure called member which performs a similar function, but does
+not accept the wildcard symbols, = and ==. Hence the need for the procedure.
+TESTS:
+is_member(1,[1 2 3])=>
+is_member(4,[1 2 3])=>
+is_member([x ==], [[x 1 2][y 3 4][z 5 6]])=>
+is_member([a ==], [[x 1 2][y 3 4][z 5 6]])=>
+*/
+
+define is_member(target,list) -> bool;
+
+    lvars item;
+    ;;; Iterate through the list
+    for item in list do
+        ;;; Check whether the pattern matches
+        if item matches target then
+            ;;; If so return true
+            true -> bool,
+            return();
+        endif;
+    endfor;
+
+    ;;; If no match then false
+    false -> bool;
+
+enddefine;
+
+
+
+/*
+PROCEDURE: is_member2 (target, list) -> matched_item
+INPUTS   : target, list
+  Where  :
+    target is the target to be matched
+    list is a list
+OUTPUTS  : matched_item is the matched element
+USED IN  : min_in_list target_coords
+CREATED  : Feb 1999
+PURPOSE  : The same as is_member but returns either the matched item or an
+empty list
+TESTS:
+is_member2([1 ==],[[1 2 3][4 5 6]])=>
+is_member2([5 ==],[[1 2 3][4 5 6]])=>
+*/
+
+define is_member2(target,list) -> matched_item;
+
+    lvars item;
+
+    ;;; Iterate through the list
+    for item in list do
+        ;;; Check whether the pattern matches
+        if item matches target then
+            ;;; If it does, then return it
+            item -> matched_item;
+            return();
+        endif;
+    endfor;
+
+    ;;; If nothing matches return an empty list
+    [] -> matched_item;
+
+enddefine;
+
+
+/*
+METHOD   : update_obstacles (ob, obs_name, obs_x, obs_y)
+INPUTS   : ob, obs_name, obs_x, obs_y
+  Where  :
+    ob is a sim_object
+    obs_name is the obstacle name
+    obs_x is the obstacle x coord
+    obs_y is the obstacle y coord
+OUTPUTS  : NONE
+USED IN  : start_turn_ruleset
+CREATED  : Nov 1998
+PURPOSE  : Updates a list holding the current positions of all obstacles
+within visual range.
+TESTS:
+setup();
+add_obstacles(10,2);
+run_agents(1);
+visible_obstacles(sim_world)=>
+*/
+
+define :method update_obstacles(ob:sim_object,obs_name,obs_x,obs_y);
+
+    lvars details = [^obs_name];
+
+    ;;; If the obstacle is not already in the list, add it
+    unless is_member(details,visible_obstacles(ob)) do
+        details::visible_obstacles(ob)->visible_obstacles(ob)
+    endunless
+
+enddefine;
+
+
+/*
+PROCEDURE: nearer_than (ag1, ag2) -> bool
+INPUTS   : ag1, ag2
+  Where  :
+    ag1 is a basic_agent
+    ag2 is a basic_agent
+OUTPUTS  : bool is a boolean value
+USED IN  : update_predators update_prey update_food
+CREATED  : Nov 1998
+PURPOSE  : Predicate to say whether ag1 is nearer than ag2, for use in the
+syssort procedure for sorting lists
+TESTS:
+nearer_than([x 1],[y 2])=>
+nearer_than([x 2],[y 1])=>
+syssort([[x 2][y 1][z 3]], nearer_than)=>
+*/
+
+define nearer_than(ag1,ag2) -> bool;
+
+    lvars dist1,dist2;
+
+    ;;; Get the last value in the 2 lists
+    ag1 --> ! [== ?dist1];
+    ag2 --> ! [== ?dist2];
+
+    ;;; Compare them
+    if dist1 < dist2 then
+        true -> bool
+    else
+        false -> bool
+    endif;
+
+
+enddefine;
+
+/*
+METHOD   : update_prey (ob, prey, dist)
+INPUTS   : ob, prey, dist
+  Where  :
+    ob is a sim_object
+    prey is a prey agent
+    dist is the distance between them
+OUTPUTS  : NONE
+USED IN  : start_turn_ruleset
+CREATED  : Nov 1998
+PURPOSE  : Updates the list of current prey positions
+TESTS:
+setup();
+add_predators(2,2,200,400,400,200,200,4);
+add_prey(2,2,200,400,400,200,200,4,200,4,200,4);
+run_agents(1);
+visible_prey(pd2)=>
+*/
+
+define :method update_prey(ob:sim_object,prey:prey_agent,dist);
+
+    lvars name = sim_name(prey);
+
+    lvars details = [^name ^dist];
+
+    ;;; If the prey is not already in the list, add it
+    unless is_member(details,visible_prey(ob)) do
+        details::visible_prey(ob)->visible_prey(ob)
+    endunless;
+
+    ;;; Sort the list to get the nearest prey agent at the front
+    syssort(visible_prey(ob),nearer_than) -> visible_prey(ob);
+
+enddefine;
+
+
+
+/*
+METHOD   : update_predators (ob, pred, dist)
+INPUTS   : ob, pred, dist
+  Where  :
+    ob is a sim_object
+    pred is a predator agent
+    dist is the distance between them
+OUTPUTS  : NONE
+USED IN  : start_turn_ruleset
+CREATED  : Nov 1998
+PURPOSE  : Updates the list of current predator positions
+TESTS:
+setup();
+add_predators(2,2,200,400,400,200,200,4);
+add_prey(2,2,200,400,400,200,200,4,200,4,200,4);
+run_agents(1);
+visible_predators(py1)=>
+*/
+
+define :method update_predators(ob:sim_object,pred:predator_agent,dist);
+
+    lvars name = sim_name(pred);
+
+    lvars details = [^name ^dist];
+
+    ;;; If the prey is not already in the list, add it
+    unless is_member(details,visible_predators(ob)) do
+        details::visible_predators(ob)->visible_predators(ob)
+    endunless;
+
+    ;;; Sort the list to get the nearest predator agent at the front
+    syssort(visible_predators(ob),nearer_than) -> visible_predators(ob);
+
+enddefine;
+
+
+/*
+METHOD   : update_food (ob, fd, dist)
+INPUTS   : ob, fd, dist
+  Where  :
+    ob is a sim_object
+    fd is a food object
+    dist is the distance between then
+OUTPUTS  : NONE
+USED IN  : start_turn_ruleset
+CREATED  : Feb 1999
+PURPOSE  : Updates the list of current food positions
+TESTS:
+setup();
+add_food2(8,2);
+add_prey(2,2,200,400,400,200,200,4,200,4,200,4);
+run_agents(1);
+visible_food(py1)=>
+*/
+
+define :method update_food(ob:sim_object,fd:food,dist);
+
+    lvars name = sim_name(fd);
+
+    lvars details = [^name ^dist];
+
+    ;;; If the food object is not already in the list, add it
+    unless is_member(details,visible_food(ob)) do
+        details::visible_food(ob)->visible_food(ob);
+    endunless;
+
+    ;;; Sort the list to get the nearest food object at the front
+    syssort(visible_food(ob),nearer_than) -> visible_food(ob);
+
+enddefine;
+
+
+
+/*
+METHOD   : reduce_energy (ag)
+INPUTS   : ag is a basic agent
+OUTPUTS  : NONE
+USED IN  : reduce_energy_ruleset
+CREATED  : Feb 1999
+PURPOSE  : Reduces an agents energy level by 1 every time its called
+TESTS:
+setup();
+add_prey(1,2,200,400,100,20,200,4,200,4,200,4);
+energy(py1)=>
+run_agents(10);
+energy(py1)=>
+*/
+
+define :method reduce_energy(ag:basic_agent);
+
+    ;;; Reduce energy by 1
+    energy(ag) - 1 -> energy(ag);
+
+    /* Used to print out the energy levels
+    rc_draw_oldpic(ag);
+    [FONT '6x13bold'{-8 -4 ^(energy(ag) >< nullstring)}] -> rc_pic_strings(ag);
+    rc_draw_linepic(ag);
+    */
+
+enddefine;
+
+
+/*
+METHOD   : update_energy (ag, amount)
+INPUTS   : ag, amount
+  Where  :
+    ag is a basic agent
+    amount is an amount of energy
+OUTPUTS  : NONE
+USED IN  : random_search_fast head_to_prey_fast head_to_food_fast
+have_i_eaten_food have_i_been_caught
+CREATED  : Feb 1999
+PURPOSE  : Changes an agent's energy level by amount
+TESTS:
+setup();
+add_prey(1,2,200,400,400,400,200,4,200,4,200,4);
+energy(py1)=>
+2 -> extra;
+run_agents(10);
+energy(py1)=>
+*/
+
+define :method update_energy(ag:basic_agent,amount);
+
+    ;;; Alter the energy level my amount
+    energy(ag) + amount -> energy(ag);
+
+    /* Used to print out the energy levels
+    rc_draw_oldpic(ag);
+    [FONT '6x13bold'{-8 -4 ^(energy(ag) >< nullstring)}] -> rc_pic_strings(ag);
+    rc_draw_linepic(ag);
+    */
+
+enddefine;
+
+
+/*
+METHOD   : update_string (ag, string)
+INPUTS   : ag, string
+  Where  :
+    ag is a basic agent
+    string is a string
+OUTPUTS  : NONE
+USED IN  : predator / prey_decision_1 / 2 / 3 / 4_rulesets
+CREATED  : Feb 1999
+PURPOSE  : Changes the string printed within an agent
+setup();
+add_prey(1,2,200,400,100,20,200,4,200,4,200,4);
+update_string(py1,'P');
+*/
+
+define :method update_string(ag:basic_agent,string);
+
+    ;;; Remove old agent picture
+    rc_draw_oldpic(ag);
+
+    ;;; Put new string into agents relevant slot
+    [FONT '6x13'{-2 -5 ^string}]::name_list(ag) -> rc_pic_strings(ag);
+
+    ;;; Draw new agent picture
+    rc_draw_linepic(ag);
+
+enddefine;
+
+
+/*
+METHOD   : update_pic_pred (pred, colour)
+INPUTS   : pred, colour
+  Where  :
+    pred is a predator agent
+    colour is a string representing a colour
+OUTPUTS  : NONE
+USED IN  : predator / prey_decision_1 / 2 / 3 / 4_rulesets
+CREATED  : Feb 1999
+PURPOSE  : Updates the picture of a predator agent to have a coloured border
+around it
+TESTS:
+setup();
+add_predators(1,1,200,400,400,200,200,4);
+update_pic_pred(pd1,'yellow');
+*/
+
+define :method update_pic_pred(pred:predator_agent,colour);
+
+    ;;; Remove old agent picture
+    rc_draw_oldpic(pred);
+
+    ;;; Put new picture list into agents relevant slot
+    [COLOUR ^colour WIDTH 2
+                [CLOSED {0 ^(-agent_size-3)} {^(-agent_size-3) 0}
+                               {0 ^(agent_size+3)} {^(agent_size+3) 0}]]
+                ::pic_list(pred) -> rc_pic_lines(pred);
+
+    ;;; Draw new agent picture
+    rc_draw_linepic(pred);
+
+enddefine;
+
+
+/*
+METHOD   : update_pic (ag, colour)
+INPUTS   : ag, colour
+  Where  :
+    ag is a basic agent
+    colour is a string representing a colour
+OUTPUTS  : NONE
+USED IN  : predator / prey_decision_1 / 2 / 3 / 4_rulesets
+CREATED  : Feb 1999
+PURPOSE  : Updates the picture of an agent to have a coloured border
+around it
+TESTS:
+setup();
+add_prey(1,1,200,400,400,200,200,4,200,4,200,4);
+update_pic(py1,'yellow');
+*/
+
+define :method update_pic(ag:basic_agent,colour);
+
+    ;;; Remove old agent picture
+    rc_draw_oldpic(ag);
+
+    ;;; Put new picture list into agents relevant slot
+    [COLOUR ^colour WIDTH 2 [CIRCLE {0 0 ^(agent_size+2)}] ]
+                ::pic_list(ag) -> rc_pic_lines(ag);
+
+    ;;; Draw new agent picture
+    rc_draw_linepic(ag);
+
+enddefine;
+
+
+/*
+METHOD   : remove_pic (ag)
+INPUTS   : ag is a basic agent
+OUTPUTS  : NONE
+USED IN  : predator / prey_decision_1 / 2 / 3 / 4_rulesets
+CREATED  : Feb 1999
+PURPOSE  : Removes any coloured borders previously added to an agent
+TESTS:
+setup();
+add_prey(1,1,200,400,400,200,200,4,200,4,200,4);
+update_pic(py1,'yellow');
+remove_pic(py1);
+rc_draw_oldpic(py1);
+*/
+
+define :method remove_pic(ag:basic_agent);
+
+    ;;; Remove old agent picture
+    rc_draw_oldpic(ag);
+
+    ;;; Put new picture list into agents relevant slot
+    pic_list(ag) -> rc_pic_lines(ag);
+
+    ;;; Draw new agent picture
+    rc_draw_linepic(ag);
+
+enddefine;
+
+/*
+METHOD   : remove_agent (ob)
+INPUTS   : ob is a sim_object
+OUTPUTS  : NONE
+USED IN  : have_i_been_caught have_i_eaten_food
+CREATED  : Nov 1998
+PURPOSE  : Remove an object from the simulation
+*/
+
+define :method remove_agent(ob:sim_object);
+
+    ;;; Add object to sim_object_delete_list, then edit the global
+    ;;; sim_objects list to remove any objects in the delete list from
+    ;;; the simulation
+    ob::sim_object_delete_list->sim_object_delete_list,
+    sim_edit_object_list(sim_objects,sim_cycle_number) -> sim_objects,
+
+    ;;; Remove the object from the window
+    ;;;rc_remove_pic_from_window(ob,mainwin);
+    rc_draw_oldpic(ob);
+
+enddefine;
+
+/*
+METHOD   : have_i_been_caught (prey) -> bool
+INPUTS   : prey
+  Where  :
+    prey is a prey agent
+OUTPUTS  : bool is a boolean value
+USED IN  : am_i_caught_ruleset
+CREATED  : Nov 1998
+PURPOSE  : Check whether a prey agent has been caught
+TESTS:
+setup();
+add_food2(10,2);
+add_predators(2,2,200,350,150,50,400,5);
+add_prey(10,2,200,350,150,50,22,2,22,2,33,2);
+run_agents(50);
+*/
+
+define :method have_i_been_caught(prey:prey_agent) -> bool;
+
+    lvars pred_list,pred_position,pd_name,pd;
+
+    visible_predators(prey) -> pred_list;
+
+    ;;; Iterate through the list of predators
+    for pred_position in pred_list do
+
+        ;;; Get a predator
+        pred_position --> ! [?pd_name  ==];
+        valof(pd_name) -> pd;
+
+        ;;; Check whether the prey agent is in the predator agent
+        if eaten(prey) = false and
+            rc_picx(prey) >= (rc_picx(pd) - (2 * agent_size) - 2) and
+            rc_picx(prey) <= (rc_picx(pd) + (2 * agent_size) + 2) and
+            rc_picy(prey) >= (rc_picy(pd) - (2 * agent_size) - 2) and
+            rc_picy(prey) <= (rc_picy(pd) + (2 * agent_size) + 2 ) then
+
+            ;;; If it is update the predators energy level, and remove the
+            ;;; prey from the simulation
+            true -> eaten(prey);
+            update_energy(pd,prey_energy_value);
+            remove_agent(prey);
+            ;;; Update counters showing number of prey agents caught
+            1 + catch_count(pd) -> catch_count(pd);
+            1 + prey_caught_count -> prey_caught_count;
+            true -> bool;
+            return();
+
+        endif;
+
+    endfor;
+
+    ;;; If not caught return false
+    false -> bool;
+
+enddefine;
+
+
+
+/*
+PROCEDURE: add_food (amount)
+INPUTS   : amount is a number
+OUTPUTS  : NONE
+USED IN  : have_i_eaten_food
+CREATED  : Feb 1999
+PURPOSE  : Adds an amount of food objects to the simulator during a run
+TESTS:
+setup();
+add_food2(10,2);
+add_prey(10,2,200,350,350,50,222,2,222,2,332,2);
+run_agents(50);
+*/
+
+define add_food(amount);
+
+    lvars fd,x=1;
+
+    ;;; For each food object to be added
+    for x to amount do
+        ;;; Create a new instance of a food object at a random point within
+        ;;; the world
+        new_food([%random0(world_width-20) - (world_width/2)%
+                %random0(world_height-20) - (world_height/2)%
+                %gensym("fd")%])
+            ->fd;
+
+        ;;; Add object to sim_object_add_list, then edit the global
+        ;;; sim_objects list to add any objects in the add list to
+        ;;; the simulation
+        fd::sim_object_add_list->sim_object_add_list;
+        sim_edit_object_list(sim_objects,sim_cycle_number) -> sim_objects;
+    endfor;
+
+enddefine;
+
+
+/*
+METHOD   : have_i_eaten_food (prey)
+INPUTS   : prey is a prey agent
+OUTPUTS  : NONE
+USED IN  : have_i_eaten_ruleset
+CREATED  : Feb 1999
+PURPOSE  : Checks whether a prey agent is over food, if it is then the prey
+agent eats the food
+TESTS:
+setup();
+add_food2(10,2);
+add_prey(10,2,200,350,350,50,222,2,222,2,332,2);
+run_agents(50);
+*/
+
+define :method have_i_eaten_food(prey:prey_agent);
+
+    lvars food_list = visible_food(prey),food_details,fd_name,fd;
+
+    ;;; Iterate through list of visible food
+    for food_details in food_list do
+
+        ;;; Get food object
+        food_details --> ! [?fd_name ==];
+        valof(fd_name) -> fd;
+
+        ;;; Check if the prey is within the food
+        if eaten(fd) = false and
+            rc_picx(prey) >= (rc_picx(fd) - agent_size) and
+            rc_picx(prey) <= (rc_picx(fd) + agent_size + obstacle_size) and
+            rc_picy(prey) >= (rc_picy(fd) - agent_size - obstacle_size) and
+            rc_picy(prey) <= (rc_picy(fd) + agent_size) then
+
+            ;;; If it is update the prey's energy level, remove the food from
+            ;;; the simulation and add a new food object
+            ;;;'mmmmmmmmmm........ tasty' =>
+            true -> eaten(fd);
+            add_food(1);
+            delete(fd,food_list)->food_list;
+            remove_agent(fd);
+            update_energy(prey,food_energy_value);
+            return();
+
+        endif;
+
+    endfor;
+
+enddefine;
+
+/*
+PROCEDURE: difference (n1, n2) -> diff
+INPUTS   : n1, n2
+  Where  :
+    n1 is a number
+    n2 is a number
+OUTPUTS  : diff is the difference between the 2 numbers
+USED IN  : move_away_from_point jump_too_large checking_target
+CREATED  : Dec 1998
+PURPOSE  : Calculates the positive difference between 2 numbers.
+
+TESTS:
+difference(-3,3)=>
+difference(3,-3)=>
+difference(3,3)=>
+difference(-150,120)=>
+*/
+
+define difference(n1,n2) -> diff;
+
+    ;;; Find the difference between the 2 numbers
+    lvars n3 = (n1 - n2);
+
+    if n3 >= 0 then
+        ;;; If the difference is positive, return it
+        n3 -> diff;
+    elseif n3 < 0  then
+        ;;; If the difference is negative, make it positive then return it
+        -n3 -> diff;
+    endif
+
+enddefine;
+
+
+/*
+PROCEDURE: move_away_from_point (old_x, old_y, speed, tar_x, tar_y) -> (new_x, new_y)
+INPUTS   : old_x, old_y, speed, tar_x, tar_y
+  Where  :
+    old_x is the old x coordinate
+    old_y is the old y coordinate
+    speed is the speed to move towards the target
+    tar_x is the target x coordinate
+    tar_y is the target y coordinate
+OUTPUTS  : new_x, new_y
+  Where  :
+    new_x is the new x coordinate
+    new_y is the new y coordinate
+USED IN  : in_personal_space
+CREATED  : Feb 1999
+PURPOSE  : Takes a target point and calculates new coordinates for a move away
+from it
+TESTS:
+move_away_from_point(0,0,2,0,4)=>
+move_away_from_point(0,0,2,4,4)=>
+move_away_from_point(0,0,2,4,0)=>
+move_away_from_point(0,0,2,4,-4)=>
+move_away_from_point(0,0,2,0,-4)=>
+move_away_from_point(0,0,2,-4,-4)=>
+move_away_from_point(0,0,2,-4,0)=>
+move_away_from_point(0,0,2,-4,4)=>
+move_away_from_point(10,10,2,0,-150)=>
+*/
+
+define move_away_from_point(old_x,old_y,speed,tar_x,tar_y) -> (new_x,new_y);
+
+    lvars esc_x,esc_y,dx,dy;
+
+    difference(tar_x,old_x) -> dx;
+    difference(tar_y,old_y) -> dy;
+
+    ;;; Calculate the mirror of the target point and then move towards it,
+    ;;; hence moving away from the target point
+    if tar_x = old_x and tar_y = old_y then
+        old_x -> esc_x;
+        old_y -> esc_y;
+    elseif tar_x = old_x and tar_y > old_y then
+        old_x -> esc_x;
+        old_y - dy -> esc_y;
+    elseif tar_x = old_x and tar_y < old_y then
+        old_x -> esc_x;
+        old_y + dy -> esc_y;
+    elseif tar_x > old_x and tar_y = old_y then
+        old_x - dx -> esc_x;
+        old_y -> esc_y;
+    elseif tar_x < old_x and tar_y = old_y then
+        old_x + dx -> esc_x;
+        old_y -> esc_y;
+    elseif tar_x > old_x and tar_y > old_y then
+        old_x - dx -> esc_x;
+        old_y - dy -> esc_y;
+    elseif tar_x > old_x and tar_y < old_y then
+        old_x - dx -> esc_x;
+        old_y + dy -> esc_y;
+    elseif tar_x < old_x and tar_y < old_y then
+        old_x + dx -> esc_x;
+        old_y + dy -> esc_y;
+    elseif tar_x < old_x and tar_y > old_y then
+        old_x + dx -> esc_x;
+        old_y - dy -> esc_y;
+    endif;
+
+    move_towards_point(old_x,old_y,speed,esc_x,esc_y)
+                        -> (new_x,new_y);
+
+
+enddefine;
+
+
+/*
+METHOD   : random_search (ag) -> (new_x, new_y)
+INPUTS   : ag is a basic agent
+OUTPUTS  : new_x, new_y
+  Where  :
+    new_x is the new x coordinate
+    new_y is the new y coordinate
+USED IN  : perform_action_ruleset
+CREATED  : Feb 1999 (original version Nov 1998)
+PURPOSE  : Picks a random point in space and then move the agent towards it
+for a random (constrained) number of cycles.
+TESTS:
+setup();
+add_predators(2,2,200,300,3,2,200,4);
+run_agents(100);
+*/
+
+define :method random_search(ag:basic_agent)->(new_x,new_y);
+
+    ;;; If the designated number of cycles have passde
+    if random_target_count(ag) = 0 then
+        ;;; Pick a random point within the world
+        (random0(world_width) - (world_width/2)) -> random_target_x(ag);
+        (random0(world_height) - (world_height/2)) -> random_target_y(ag);
+
+        ;;; Pick the number of cycles to head to that point for
+        random(30) -> random_target_count(ag);
+
+        ;;; Pick the speed at which to move towards that point
+        random(4) -> random_target_speed(ag);
+
+        ;;; Move towards it
+        move_towards_point(rc_picx(ag),rc_picy(ag),random_target_speed(ag),
+                random_target_x(ag),random_target_y(ag)) -> (new_x,new_y);
+        ;;;'new target'=>
+    else
+        ;;; Else move towards previously selected point
+        move_towards_point(rc_picx(ag),rc_picy(ag),random_target_speed(ag),
+                random_target_x(ag),random_target_y(ag)) -> (new_x,new_y);
+        ;;;'go to point'=>
+    endif;
+
+    ;;; Check that the new coordinates are not in any other object
+    if in_object(ag,new_x,new_y) then
+        0 -> random_target_count(ag);
+        random_search(ag) -> (new_x,new_y);
+    endif;
+
+enddefine;
+
+
+/*
+METHOD   : random_search_fast (ag) -> (new_x, new_y)
+INPUTS   : ag is a basic agent
+OUTPUTS  : new_x, new_y
+  Where  :
+    new_x is the new x coordinate
+    new_y is the new y coordinate
+USED IN  : perform_action_ruleset
+CREATED  : Feb 1999
+PURPOSE  : Move randomly (identical to random_search) but use increased speed
+TESTS:
+setup();
+add_predators(2,2,200,400,400,200,200,4);
+run_agents(100);
+*/
+
+define :method random_search_fast(ag:basic_agent)->(new_x,new_y);
+
+    ;;; Decide what speed to use, based on type of agent
+    if ispredator_agent(ag) then
+        predator_attack_speed(ag) + extra -> random_target_speed(ag);
+    else
+        prey_escape_speed(ag) + extra -> random_target_speed(ag);
+    endif;
+
+    ;;; Rest of code does exactly the same as random_search
+
+    if random_target_count(ag) = 0 then
+        (random0(world_width) - (world_width/2)) -> random_target_x(ag);
+        (random0(world_height) - (world_height/2)) -> random_target_y(ag);
+        random(30) -> random_target_count(ag);
+        move_towards_point(rc_picx(ag),rc_picy(ag),random_target_speed(ag),
+                random_target_x(ag),random_target_y(ag)) -> (new_x,new_y);
+    else
+        move_towards_point(rc_picx(ag),rc_picy(ag),random_target_speed(ag),
+                random_target_x(ag),random_target_y(ag)) -> (new_x,new_y);
+    endif;
+
+    if in_object(ag,new_x,new_y) then
+        0 -> random_target_count(ag);
+        random_search_fast(ag) -> (new_x,new_y);
+    endif;
+
+    ;;; Remove extra energy
+    update_energy(ag,-extra);
+
+enddefine;
+
+
+/*
+METHOD   : head_to_prey (ag) -> (new_x, new_y)
+INPUTS   : ag
+  Where  :
+    ag is a basic agent
+OUTPUTS  : new_x, new_y
+  Where  :
+    new_x is the new x coordinate
+    new_y is the new y coordinate
+USED IN  : perform_action_ruleset
+CREATED  : Nov 1998
+PURPOSE  : Calculates new coordinates for a move towards a prey agent
+TESTS:
+setup();
+'direct' -> attack_type;
+add_predators(2,2,200,400,400,200,200,4);
+add_prey(2,2,200,400,400,200,20,4,20,4,20,4);
+run_agents(100);
+*/
+
+define :method head_to_prey(ag:basic_agent) -> (new_x,new_y);
+
+    lvars py_name,py,py_x,py_y,dist;
+
+    ;;; If closest prey is a ghost (moved off screen)
+    if length(hd(visible_prey(ag))) > 2 then
+        ;;; Get it's coordinates
+        hd(visible_prey(ag)) --> ! [== ?py_x ?py_y ?dist];
+        ;;; And head towards it
+        move_towards_point(rc_picx(ag),rc_picy(ag),predator_attack_speed(ag)
+            ,py_x,py_y) -> (new_x,new_y);
+    ;;; If closest prey is a normal prey
+    else
+        ;;; Get the prey
+        hd(visible_prey(ag)) --> ! [?py_name ?dist];
+        valof(py_name) -> py;
+        ;;; Move towards it
+        move_towards_point(rc_picx(ag),rc_picy(ag),predator_attack_speed(ag)
+            ,rc_picx(py),rc_picy(py)) -> (new_x,new_y);
+    endif;
+
+    ;;; If move would take agent into an object, make a random move
+    ;;; instead.
+    if in_object(ag,new_x,new_y) then
+        0 -> random_target_count(ag);
+        random_search(ag) -> (new_x,new_y)
+    endif;
+
+enddefine;
+
+
+/*
+METHOD   : head_to_prey_fast (pred) -> (new_x, new_y)
+INPUTS   : pred is a predator agent
+OUTPUTS  : new_x, new_y
+  Where  :
+    new_x is the new x coordinate
+    new_y is the new y coordinate
+USED IN  : perform_action_ruleset
+CREATED  : Feb 1999
+PURPOSE  : The same as head_to_prey but uses increased speed.
+TESTS:
+setup();
+'direct' -> attack_type;
+add_predators(1,2,200,400,400,400,200,4);
+add_prey(2,2,300,400,400,200,20,4,20,4,20,4);
+run_agents(100);
+
+*/
+
+define :method head_to_prey_fast(pred:predator_agent) -> (new_x,new_y);
+
+    ;;; Works the same as head_to_prey
+
+    lvars py_name,py,py_x,py_y,dist;
+
+    if length(hd(visible_prey(pred))) > 2 then
+        hd(visible_prey(pred)) --> ! [== ?py_x ?py_y ?dist];
+
+        move_towards_point(rc_picx(pred),rc_picy(pred),
+            (predator_attack_speed(pred) + extra),py_x,py_y) -> (new_x,new_y);
+    else
+
+        hd(visible_prey(pred)) --> ! [?py_name ?dist];
+        valof(py_name) -> py;
+
+        move_towards_point(rc_picx(pred),rc_picy(pred),
+            (predator_attack_speed(pred) + extra),rc_picx(py),rc_picy(py))
+            -> (new_x,new_y);
+    endif;
+
+    if in_object(pred,new_x,new_y) then
+        0 -> random_target_count(pred);
+        random_search(pred) -> (new_x,new_y)
+    endif;
+
+    ;;; Remove extra energy from the predator
+    update_energy(pred,-extra);
+
+enddefine;
+
+/*
+METHOD   : in_personal_space (prey, x, y) -> (new_x, new_y)
+INPUTS   : prey, x, y
+  Where  :
+    prey is a prey agent
+    x is a x coordinate
+    y is a y coordinate
+OUTPUTS  : new_x, new_y
+  Where  :
+    new_x is a the new x coordinate
+    new_y is a the new y coordinate
+USED IN  : flock_boids
+CREATED  : Mar 1999
+PURPOSE  : Checks whether the x and y coordinates are within a certain range
+(flock separation) of another prey, if they are then the coordinates are
+adjusted to move away from that prey
+TESTS:
+setup();
+'boids' -> flock_type;
+add_prey(1,2,200,350,150,50,100,4,22,2,33,3);
+run_agents(200);
+*/
+
+define :method in_personal_space(prey:prey_agent,x,y) -> (new_x,new_y);
+
+    lvars prey_position,py_name,py;
+
+    ;;; for each visible prey
+    for prey_position in visible_prey(prey) do
+
+        ;;; Get the prey
+        prey_position --> ! [?py_name ==];
+        valof(py_name) -> py;
+
+        ;;; Check whether x and y are within its personal space
+        if x >= (rc_picx(py) - flock_separation) and
+            x <= (rc_picx(py) + flock_separation) and
+            y >= (rc_picy(py) - flock_separation) and
+            y <= (rc_picy(py) + flock_separation) then
+
+            ;;; If they are, move away from the prey
+            move_away_from_point(rc_picx(prey),rc_picy(prey),
+                prey_flocking_speed(prey),rc_picx(py),rc_picy(py))
+                -> (new_x,new_y);
+            return();
+
+        endif;
+
+    endfor;
+
+    ;;; If not, return unchanged coordinates
+    x -> new_x;
+    y -> new_y;
+
+enddefine;
+
+/*
+METHOD   : flock_to_prey (prey) -> (new_x, new_y)
+INPUTS   : prey is a prey agent
+OUTPUTS  : new_x, new_y
+  Where  :
+    new_x is the new x coordinate
+    new_y is the new y coordinate
+USED IN  : perform_action_ruleset
+CREATED  : Feb 1999
+PURPOSE  : Calculates new coordinates to take a prey agent directly towards
+another prey agent, and then try and keep a minimum distance.
+TESTS:
+setup();
+'point' -> flock_type;
+add_prey(6,2,300,400,400,20,200,4,200,4,200,4);
+run_agents(100);
+*/
+
+define :method flock_to_prey(prey:prey_agent) -> (new_x,new_y);
+
+    lvars tar_name,tar,tar_dist;
+    ;;; Get the nearest prey agent
+    hd(visible_prey(prey)) --> ! [?tar_name ?tar_dist];
+    valof(tar_name) -> tar;
+
+    ;;; If the nearest prey is further awat than the flock separation, move
+    ;;; towards it
+    if tar_dist > flock_separation then
+        move_towards_point(rc_picx(prey),rc_picy(prey),
+            prey_flocking_speed(prey),rc_picx(tar),rc_picy(tar))
+            -> (new_x,new_y);
+    ;;; If it is closer than the flock separation, move away from it
+    elseif tar_dist <= flock_separation then
+        move_away_from_point(rc_picx(prey),rc_picy(prey),
+            prey_flocking_speed(prey),rc_picx(tar),rc_picy(tar))
+            -> (new_x,new_y);
+    endif;
+
+    ;;;If move would take prey into an object, make a random move
+    ;;; instead.
+    if in_object(prey,new_x,new_y) then
+        0 -> random_target_count(prey);
+        random_search(prey) -> (new_x,new_y)
+    endif;
+
+enddefine;
+
+
+/*
+METHOD   : escape_from_predator (prey) -> (new_x, new_y)
+INPUTS   : prey
+  Where  :
+    prey is a prey_agent
+OUTPUTS  : new_x, new_y
+  Where  :
+    new_x is the new x coordinate
+    new_y is the new y coordinate
+USED IN  : prey_move_ruleset
+CREATED  : Oct 1998
+PURPOSE  : Calculates a move to take the prey agent directly away from any
+predator
+TESTS:
+setup();
+add_predators(1,2,200,350,150,50,400,3);
+add_prey(8,2,200,350,150,50,800,4,322,4,333,4);
+run_agents(50);
+*/
+
+define :method escape_from_predator(prey:prey_agent) -> (new_x,new_y);
+
+    lvars pred_name,pred,dist;
+
+    ;;; Get the closest predator
+    hd(visible_predators(prey)) --> ! [?pred_name ?dist];
+    valof(pred_name) -> pred;
+
+    ;;; Move away from it
+    move_away_from_point(rc_picx(prey),rc_picy(prey),prey_escape_speed(prey),
+            rc_picx(pred),rc_picy(pred)) -> (new_x,new_y);
+
+    ;;; If move would take prey into an object, make a random move
+    ;;; instead.
+    if in_object(prey,new_x,new_y) then
+        0 -> random_target_count(prey);
+        random_search(prey) -> (new_x,new_y);
+    endif;
+
+enddefine;
+
+
+
+/*
+METHOD   : head_to_food (prey) -> (new_x, new_y)
+INPUTS   : prey is a prey agent
+OUTPUTS  : new_x, new_y
+  Where  :
+    new_x is the new x coordinate
+    new_y is the new y coordinate
+USED IN  : perform_action_ruleset
+CREATED  : Feb 1999
+PURPOSE  : Calculates a move to take the prey agent directly towards any food
+TESTS:
+setup();
+add_food2(20,2);
+add_prey(8,2,200,350,350,50,800,4,322,4,333,4);
+run_agents(50);
+*/
+
+define :method head_to_food(prey:prey_agent) -> (new_x,new_y);
+
+    lvars fd_name,fd,dist;
+
+    ;;; Get the nearest food object
+    hd(visible_food(prey)) --> ! [?fd_name ?dist];
+    valof(fd_name) -> fd;
+
+    ;;; Move towards it
+    move_towards_point(rc_picx(prey),rc_picy(prey),prey_forage_speed(prey),
+        rc_picx(fd),rc_picy(fd)) -> (new_x,new_y);
+
+    ;;; If move would take prey into an object, make a random move
+    ;;; instead.
+    if in_object(prey,new_x,new_y) then
+        0 -> random_target_count(prey);
+        random_search(prey) -> (new_x,new_y);
+    endif;
+
+enddefine;
+
+
+/*
+METHOD   : head_to_food_fast (prey) -> (new_x, new_y)
+INPUTS   : prey is a prey agent
+OUTPUTS  : new_x, new_y
+  Where  :
+    new_x is the new x coordinate
+    new_y is the new x coordinate
+USED IN  : perform_action_ruleset
+CREATED  : Feb 1999
+PURPOSE  : Same as head_to_food, but uses extra speed/energy
+TESTS:
+setup();
+add_food2(20,2);
+add_prey(8,2,100,550,450,100,800,4,322,4,333,4);
+run_agents(50);
+*/
+
+define :method head_to_food_fast(prey:prey_agent) -> (new_x,new_y);
+
+    ;;; Same as head_to_food
+
+    lvars fd_name,fd,dist;
+    hd(visible_food(prey)) --> ! [?fd_name ?dist];
+    valof(fd_name) -> fd;
+
+    ;;; Use extra speed
+    move_towards_point(rc_picx(prey),rc_picy(prey),
+        (prey_forage_speed(prey)+extra),rc_picx(fd),rc_picy(fd))
+        -> (new_x,new_y);
+
+    ;;; If move would take prey into an obstacle, make a random move
+    ;;; instead.
+    if in_object(prey,new_x,new_y) then
+        0 -> random_target_count(prey);
+        random_search_fast(prey) -> (new_x,new_y);
+    endif;
+
+    ;;; Remove extra energy
+    update_energy(prey,-extra);
+
+enddefine;
+
+
+/*
+METHOD   : prey_in_range (ag) -> bool
+INPUTS   : ag is a basic_agent
+OUTPUTS  : bool is a boolean value
+USED IN  : predator / prey_decision_1 / 2 / 3 / 4_rulesets
+CREATED  : Oct 1998
+PURPOSE  : Returns true if there is a prey agent present within a specified
+range. Else false.
+TESTS:
+setup();
+add_prey(8,2,100,550,450,100,100,4,122,4,133,4);
+run_agents(1);
+prey_in_range(py6)=>
+*/
+
+define :method prey_in_range(ag:basic_agent) -> bool;
+
+    lvars dist,range;
+
+    ;;; If no prey visible then false
+    if visible_prey(ag) = [] then
+        false -> bool,
+        return();
+    endif;
+
+    ;;; Choose range to use
+    if ispredator_agent(ag) then
+        ;;; Predators use attack range
+        predator_attack_range(ag) -> range;
+    else
+        ;;; pre use flocking range
+        prey_flocking_range(ag) -> range;
+    endif;
+
+    ;;; Get the distance of the closest prey
+    hd(visible_prey(ag)) --> ! [== ?dist];
+
+    ;;; Compare it to the range
+    if dist > range then
+        ;;; If greater than range then false
+        false -> bool
+    elseif dist < range then
+        ;;; If less, then true
+        true -> bool
+    else
+        ;;; Default case
+        false -> bool
+    endif;
+
+enddefine;
+
+
+/*
+METHOD   : predator_in_range (prey) -> bool
+INPUTS   : prey is a prey_agent
+OUTPUTS  : bool is a boolean value
+USED IN  : predator / prey_decision_1 / 2 / 3 / 4_rulesets
+CREATED  : Oct 1998
+PURPOSE  : Returns true if there is a predator agent present within the
+preys escape range. Else false.
+TESTS:
+setup();
+add_predators(1,2,100,550,450,100,100,4);
+add_prey(8,2,100,550,450,100,100,4,122,4,133,4);
+run_agents(1);
+predator_in_range(py7)=>
+*/
+
+define :method predator_in_range(prey:prey_agent) -> bool;
+
+    ;;; If no predators visible then false
+    if visible_predators(prey) = [] then
+        false -> bool,
+        return();
+    endif;
+
+    lvars dist;
+    ;;; Get the distance of the closest predator
+    hd(visible_predators(prey)) --> ! [== ?dist];
+
+    ;;; Compare it to the range
+    if dist > prey_escape_range(prey) then
+        ;;; If greater than range then false
+        false -> bool
+    elseif dist < prey_escape_range(prey) then
+        ;;; If less, then true
+        true -> bool
+    else
+        ;;; Default case
+        false -> bool
+    endif;
+
+enddefine;
+
+
+
+/*
+METHOD   : food_in_range (prey) -> bool
+INPUTS   : prey is a prey agent
+OUTPUTS  : bool is a boolean value
+USED IN  : prey_decision_1 / 2 / 3 / 4_rulesets
+CREATED  : Feb 1999
+PURPOSE  : Returns true if there is a food object present within the
+preys forage range. Else false.
+TESTS:
+setup();
+add_food2(2,2);
+add_prey(8,2,100,550,450,100,100,4,122,4,133,4);
+run_agents(1);
+food_in_range(py7)=>
+*/
+
+define :method food_in_range(prey:prey_agent) -> bool;
+
+    ;;; If no predators visible then false
+    if visible_food(prey) = [] then
+        false -> bool,
+        return();
+    endif;
+
+    lvars dist;
+    ;;; Get the distance of the closest food
+    hd(visible_food(prey)) --> ! [== ?dist];
+
+    ;;; Compare it to the range
+    if dist > food_sense_range(prey) then
+        ;;; If greater than range then false
+        false -> bool
+    elseif dist < food_sense_range(prey) then
+        ;;; If less, then true
+        true -> bool
+    else
+         ;;; Default case
+        false -> bool
+    endif;
+
+enddefine;
+
+/*
+METHOD   : move_agent (ag, new_x, new_y)
+INPUTS   : ag, new_x, new_y
+  Where  :
+    ag is a basic_agent
+    new_x is a x coordinate
+    new_y is a y coordinate
+OUTPUTS  : NONE
+USED IN  : perform_action_ruleset
+CREATED  : Oct 1998
+PURPOSE  : Move an agent to a arbitrary point within the world
+TESTS:
+setup();
+add_prey(1,2,100,550,450,100,100,4,122,4,133,4);
+add_predators(1,2,100,550,450,100,100,4);
+move_agent(py1,0,0);
+move_agent(pd1,-45,24);
+*/
+
+define :method move_agent(ag:basic_agent,new_x,new_y);
+
+    ;;; Move the agent in the window
+    rc_move_to(ag,new_x,new_y,true);
+
+    ;;; Update the agents coordinates
+    new_x -> rc_picx(ag);
+    new_y -> rc_picy(ag);
+
+enddefine;
+
+
+
+/*
+PROCEDURE: killwindows ()
+INPUTS   : NONE
+OUTPUTS  : NONE
+USED IN  : setup
+CREATED  : Oct 1998 (originally taken from teach sim_feelings)
+PURPOSE  : Remove the window object mainwin if it already exists
+TESTS:
+rc_new_window_object(15, 100, world_width, world_height,
+    {200 200 1 -1} ,'Test Window') -> mainwin;
+killwindows();
+
+*/
+
+define killwindows();
+
+    ;;; If mainwin is created
+    if isrc_window_object(mainwin) then
+        ;;; Kill it
+        rc_kill_window_object(mainwin)
+    endif;
+
+    false -> mainwin;
+
+enddefine;
+
+
+/*
+PROCEDURE: killmenus ()
+INPUTS   : NONE
+OUTPUTS  : NONE
+USED IN  : startup_panel_fields
+CREATED  : Feb 1999
+PURPOSE  : Kills any open menu panels
+*/
+
+define killmenus();
+
+    lvars menu;
+    ;;; Iterate through the global list containing all open panels
+    for menu in panel_list do
+        ;;; Kill the panel
+        menu -> rc_current_panel;
+        rc_kill_window_object(rc_current_panel);
+    endfor;
+
+enddefine;
+
+
+/*
+PROCEDURE: setup ()
+INPUTS   : NONE
+OUTPUTS  : NONE
+USED IN  : world_create_panel
+CREATED  : Oct 1998 (originally taken from teach sim_feelings)
+PURPOSE  : Sets up the window which will contain the agents, and intantiates
+global variables to required values before the start of the simulation
+TESTS:
+setup();
+*/
+
+define setup();
+
+    ;;; Remove any previous versions
+    killwindows();
+
+    ;;; Calculate the position for the origin
+    lvars origin_x = world_width/2,
+          origin_y = world_height/2;
+
+
+
+    ;;; Draw window
+    rc_new_window_object(15, 100, world_width, world_height,
+        {^origin_x ^origin_y 1 -1} ,'World') -> mainwin;
+
+    ;;; Instantiate global variables
+
+    ;;; Intantiate lists to hold all of the objects
+    [] -> predator_list;
+    [] -> prey_list;
+    [] -> obstacle_list;
+    [] -> food_list;
+    [] -> world_list;
+
+    ;;; Intantiate counters to keep track of the number of objects in the world
+    0 -> prey_count;
+    0 -> predator_count;
+    0 -> obstacle_count;
+    0 -> food_count;
+
+    ;;; Instantiate gensym_property, used in the creation of the names of
+    ;;; the objects
+    1 -> gensym_property("fd");
+    1 -> gensym_property("py");
+    1 -> gensym_property("pd");
+    1 -> gensym_property("ob");
+
+    ;;; Intantiate counters to provide information on the simulation once it
+    ;;; has finished
+    0 -> prey_starve;
+    0 -> predator_starve;
+    0.0 -> prey_encounter_count;
+    0 -> prey_caught_count;
+
+    ;;; Create a new instance of a world object
+    new_world([sim_world]);
+
+enddefine;
+
+
+/*
+METHOD   : print_instance (w)
+INPUTS   : w is a world object
+OUTPUTS  : NONE
+USED IN  :
+CREATED  : Feb 1999
+PURPOSE  : Customised print function for the world class
+TESTS:
+setup();
+sim_world=>
+*/
+
+define :method print_instance(w:world);
+
+    printf(
+        '%P %P %P %P %P',
+        ;;; Print name and some lists
+        [% sim_name(w) , visible_predators(w), visible_prey(w),
+            visible_obstacles(w), visible_food(w) %])
+
+enddefine;
+
+/*
+METHOD   : print_instance (ob)
+INPUTS   : ob is a sim_object
+OUTPUTS  : NONE
+USED IN  :
+CREATED  : Oct 1998
+PURPOSE  : Customised print function for sim_objects
+TESTS:
+setup();
+add_food2(1,2);
+add_obstacles(1,2);
+add_predators(1,2,200,350,150,50,400,4);
+add_prey(1,2,200,350,150,50,100,4,22,2,33,3);
+py1=>
+pd1=>
+ob1=>
+fd1=>
+*/
+
+define :method print_instance(ob:sim_object);
+    printf(
+        '%P %P %P',
+        ;;; Print name and coordinates
+        [% sim_name(ob), rc_picx(ob), rc_picy(ob) %])
+enddefine;
+
+
+
+/*
+PROCEDURE: end_info (cycles)
+INPUTS   : cycles is the number of cycles the simulation has run for
+OUTPUTS  : NONE
+USED IN  : run_agents
+CREATED  : Mar 1999
+PURPOSE  : Prints out information at the end of a simulation run
+TESTS:
+setup();
+add_food2(10,2);
+add_obstacles(1,2);
+add_predators(1,2,200,350,150,50,400,4);
+add_prey(1,2,200,350,150,50,100,4,22,2,33,3);
+run_agents(5);
+*/
+
+define end_info(cycles);
+
+    ;;; Uncomment if printing into another xved buffer is required
+    ;;;dlocal cucharout = veddiscout('~/SEM300/working/Results');
+
+    ''=>
+    '-------------------------------------------------'=>
+    'Simulation Length'=>
+    cycles=>
+    'Start No. of Predators'=>
+    predator_count=>
+    'Start No. of Prey'=>
+    prey_count=>
+    'Attack Type'=>
+    attack_type=>
+    'Flock Type'=>
+    flock_type=>
+    'No. of Prey Agents Caught'=>
+    prey_caught_count=>
+    'Average No. of Encounters with a Predator'=>
+    ;;; Calculate the average number of encounters with a predator
+    if prey_count = 0 then
+        0=>
+    else
+        (prey_encounter_count/prey_count)=>
+    endif;
+    'No. of Predators that starved'=>
+    predator_starve=>
+    'No. of Prey that starved'=>
+    prey_starve=>
+
+
+enddefine;
+
+
+
+/*
+PROCEDURE: run_agents (cycles)
+INPUTS   : cycles is the number of cycles to run the simulation for
+OUTPUTS  : NONE
+USED IN  : sched_panel_fields
+CREATED  : Feb 1999
+PURPOSE  : Calls sim_scheduler with all of the agents and a number of cycles
+for which to run the simulation for
+TESTS:
+setup();
+add_food2(10,2);
+add_obstacles(1,2);
+add_predators(1,2,200,350,150,50,400,4);
+add_prey(1,2,200,350,150,50,100,4,22,2,33,3);
+run_agents(5);
+*/
+
+define run_agents(cycles);
+
+    mainwin -> rc_current_window_object;
+
+    ;;; Call sim_scheduler with lists of objects
+    sim_scheduler([ ^^predator_list
+                    ^^prey_list ^^obstacle_list ^^food_list ^^world_list],
+                    cycles);
+
+    ;;; Print information about the run
+    end_info(cycles);
+
+enddefine;

@@ -1,0 +1,20 @@
+"object346"->object;
+"sim_x"->slotname;
+
+newproperty([],20,[],"perm")->slot_prop;
+
+conspair(object,slotname)->pair;
+
+"test"->slot_prop(pair);
+slot_prop(conspair(object,slotname))=>
+
+
+
+
+
+
+define lconstant printage(key,value);
+    pr(key), pr(`\t`), pr(value), pr(newline);
+enddefine;
+
+appproperty(slot_prop, printage);

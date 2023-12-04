@@ -1,0 +1,407 @@
+load sim_tileworld.p
+load sim_instrument.p
+;;; The form produced in sim_instrument is a global list called
+;;; sim_instrumentation_data. This is a flat list of the class
+;;; sim_instrument_datum. Which is basically a flat list of all
+;;; accesses and updates that occurred during the simulation. The
+;;; procedures in this file take this flat list and produce a new list
+;;; of sim_processed_instrument_actor where each
+;;; sim_processed_instrument_actor in the list represents an actor in
+;;; the simulation, ie something which updated or accessed an
+;;; instrumented slot.
+;;;TW.new_hole_prob     = 0.1;
+;;;TW.new_tile_prob     = 0.1;
+;;;TW.new_obstacle_prob = 0.1;
+
+define :class sim_processed_instrument;
+    slot num_accesses==0;  ;;;Number of accesses made
+    slot num_updates==0;   ;;;Number of updates made
+    slot accesslist==[];   ;;;list of sim_instrument_datum, one for each access
+    slot updatelist==[];   ;;;list of sim_instrument_datum, one for each update
+    enddefine;
+
+;;; This final output once sim_instrumentation_data has been processed
+;;; is a list of these objects. There is an instance of this class
+;;; created for each actor (something which made at least one access
+;;; or update) in the simulation. 
+define :class sim_processed_instrument_actor is sim_processed_instrument;
+    slot sim_datum_actor;  ;;;Actors name eg. Agent23
+    slot sim_datum_class;
+      enddefine;
+    
+;;; The sim_instrumentation_data can be processed in a different way
+;;; so the resulting output is given in terms of slots (state
+;;; variables) rather than actors
+define :class sim_processed_instrument_slot is sim_processed_instrument;
+    slot sim_datum_slot;   ;;;The slot concerned
+    slot sim_datum_object; ;;;The object which the slot belongs
+    slot actor_updates==[]; ;;; A list of the actors which updated the slot
+    slot actor_accesses==[]; ;;; A list of the actors which accessed the slot
+    enddefine;
+
+define :class sim_actor_total;
+    slot sim_datum_actor;
+    slot sim_number==0;
+enddefine;
+    
+    
+;;; Prints out the final processed list of data (ie. list of
+;;; sim_processed_instrument_actor)
+
+
+define print_actors(processedactors);
+    lvars actor;
+    for actor in processedactors do
+	[********]=>
+	[actor name: ^(actor.sim_datum_actor)]=>
+	[Number of accesses made by 
+	 ^(actor.sim_datum_actor): ^(actor.num_accesses)]=>
+	[Number of updates made by 
+	 ^(actor.sim_datum_actor): ^(actor.num_updates)]=>
+	[Class: ^(actor.sim_datum_class)]=>
+	;;; 	[Accesses made by ^(actor.sim_datum_actor): ^(actor.accesslist)]=>
+	;;;    	[Updates made by ^(actor.sim_datum_actor): ^(actor.updatelist)]=>
+	[********]=>
+    endfor;
+enddefine;
+
+define print_slots(processedslots);
+    lvars aslot;
+    for aslot in processedslots do
+	[********]=>
+	[Slot: ^(aslot.sim_datum_slot)]=>
+	[Object which contains slot: ^(aslot.sim_datum_object)]=>
+	[Number of accesses made to  this slot: ^(aslot.num_accesses)]=>
+	[Number of updates made to this slot: ^(aslot.num_updates)]=>
+	[The actors which accessed the slot are:  ^(aslot.actor_accesses)]=>
+	[The actors which updated the slot are:  ^(aslot.actor_updates)]=>
+	;;; 	[Accesses made by ^(actor.sim_datum_actor): ^(actor.accesslist)]=>
+	;;;    	[Updates made by ^(actor.sim_datum_actor): ^(actor.updatelist)]=>
+	[********]=>
+    endfor;
+enddefine;
+
+;;; Used in create_processed_data
+define member_actor(actor_name,object_list)->result;
+    lvars name;
+    false->result;
+    for name in object_list do
+	if actor_name=name.sim_datum_actor then
+	    true->result;
+	endif;
+    endfor;
+enddefine;
+
+define member_access(access, list_of_accesses)->result;
+    lvars name;
+    false->result;
+    for name in list_of_accesses do
+	if access.sim_datum_object=name.sim_datum_object 
+		and access.sim_datum_slot=name.sim_datum_slot then
+	    true->result;
+	endif;
+    endfor;
+enddefine;
+
+;;; Takes a list of actors and creates a list of corresponding
+;;; sim_processed_instrument_actor objects, with sim_datum_actor
+;;; instantiated to actors name
+define create_processed_data(actorlist)->listofproccessedobjects;
+    lvars name,newdata,listofproccessedobjects=[];
+    for name in actorlist do
+	if member_actor(name,listofproccessedobjects) then 	
+
+	else
+	    newsim_processed_instrument_actor()->newdata;
+	    name->newdata.sim_datum_actor;
+	    cons(newdata,listofproccessedobjects)->listofproccessedobjects;
+	endif;
+    endfor;
+enddefine;
+
+;;; Takes a list of slots and creates a list of corresponding
+;;; sim_processed_instrument_slots objects.
+define create_processed_data_slots(slotlist)->listofproccessedslots;
+    lvars aslot,newdata,listofproccessedslots=[];
+    for aslot in slotlist do
+	if member_access(aslot, listofproccessedslots) then 	
+
+	else
+	    newsim_processed_instrument_slot()->newdata;
+	    aslot.sim_datum_object->newdata.sim_datum_object;
+	    aslot.sim_datum_slot->newdata.sim_datum_slot;
+	    cons(newdata,listofproccessedslots)->listofproccessedslots;
+	endif;
+    endfor;
+enddefine;
+
+
+;;; This can be used on the list of processed actors before running
+;;; get_shared_accesses. This way you only get the common accesses
+;;; between the tile_agents in the simulation and ignore the
+;;; environment.
+define get_tile_agents(listofprocessedactors)->tileagents;
+    lvars i;
+    []->tileagents;
+    for i in listofprocessedactors do
+    	if(sim_datum_class(i)=tile_agent_key) then
+    	    cons(i,tileagents)->tileagents;
+	endif;
+    endfor;
+enddefine;
+
+
+
+define :method get_shared_accesses(o1:sim_processed_instrument_actor,
+		       		   o2:sim_processed_instrument_actor)->shared;
+    lvars access, access2, shared=[];
+
+    for access in o1.accesslist do
+	for access2 in o2.accesslist do
+	    if (access.sim_datum_object = access2.sim_datum_object) 
+		    and (access.sim_datum_slot = access2.sim_datum_slot) and
+		    not(member_access(access, shared))		    
+		    then
+	    access::shared->shared; access2::shared->shared;quitloop;
+		
+		
+	    endif;
+	endfor;
+    endfor;
+enddefine;
+
+    
+;;; This returns the common accesses which occurred between two actors
+;;; during the time period indicated by the third and fourth argument
+;;; (time is in cycles)
+define :method get_shared_accesses_in(o1:sim_processed_instrument_actor,
+		       		   o2:sim_processed_instrument_actor,
+				       initialtime, endtime)->shared;
+    lvars access, access2, shared=[];
+    for access in o1.accesslist do
+	for access2 in o2.accesslist do
+	    if (access.sim_datum_object = access2.sim_datum_object) 
+		    and (access.sim_datum_slot = access2.sim_datum_slot) and
+		    not(member_access(access, shared)) and
+		    (access.sim_datum_cycle >= initialtime) and
+		    (access.sim_datum_cycle =< endtime) and 
+ 		    (access2.sim_datum_cycle >= initialtime) and
+		    (access2.sim_datum_cycle =< endtime) then
+	    access::shared->shared; access2::shared->shared;quitloop;	    
+	    endif;
+	endfor;
+    endfor;
+enddefine;
+
+
+
+
+;;; instantiates the accesslist and updatelist of the
+;;; sim_processed_instrument_actor;
+define get_accesses(processedactors,instrumentation_data);
+    lvars actor,data,newactors=[];
+    for actor in processedactors do	  
+	  for data in instrumentation_data do
+	      if(data.sim_datum_actor=actor.sim_datum_actor) then
+		  data.sim_datum_class->actor.sim_datum_class;
+		  if(data.sim_datum_action="access") then
+		      cons(data,actor.accesslist)->actor.accesslist;
+ 		      actor.num_accesses+1->actor.num_accesses;
+		  elseif(data.sim_datum_action="update") then
+		      cons(data,actor.updatelist)->actor.updatelist;
+		      actor.num_updates+1->actor.num_updates;
+    		  endif;		  
+	      endif;
+	  endfor;	  	 	  
+      endfor;
+enddefine;
+
+
+;;; instantiates the accesslist and updatelist of the
+;;; sim_processed_instrument_slots;
+define get_accesses_slots(processedslots,instrumentation_data);
+    lvars aslot,data,newactors=[];
+
+    for aslot in processedslots do	  
+	for data in instrumentation_data do
+	    if(data.sim_datum_slot=aslot.sim_datum_slot) and 
+		    (data.sim_datum_object=aslot.sim_datum_object) then
+		;;;If its an access
+		if(data.sim_datum_action="access") then
+		    cons(data,aslot.accesslist)->aslot.accesslist;
+		    aslot.num_accesses+1->aslot.num_accesses;
+		    unless(member(data.sim_datum_actor,aslot.actor_accesses)) then
+	      	      	cons(data.sim_datum_actor, 
+			     aslot.actor_accesses)->aslot.actor_accesses
+		    endunless;
+		;;;If its an update
+		elseif(data.sim_datum_action="update") then
+		    cons(data,aslot.updatelist)->aslot.updatelist;
+		    aslot.num_updates+1->aslot.num_updates;
+		    unless(member(data.sim_datum_actor,aslot.actor_updates)) then
+		      	cons(data.sim_datum_actor, 
+			     aslot.actor_updates)->aslot.actor_updates
+		    endunless;
+		endif;		  
+	    endif;
+	endfor;	  	 	  
+    endfor;
+enddefine;
+    
+;;; Creates a list of all the slots updated or accessed during the simulation
+define get_slots(instrumentation_data)->slotlist;
+    lvars data,slotlist=[];
+    for data in instrumentation_data do
+	unless member_access(data,slotlist) then 	
+	    cons(data,slotlist)->slotlist;
+	endunless;
+    endfor;
+enddefine;
+
+;;; Creates a list of all the actors in the sim_instrumentation_data
+define get_actors(instrumentation_data)->actorlist;
+    lvars data,actorlist=[];
+    for data in instrumentation_data do
+	if member(data.sim_datum_actor,actorlist) then 	
+	else
+	    cons(data.sim_datum_actor,actorlist)->actorlist;
+	endif;
+    endfor;
+enddefine;
+
+
+define run_exp2(num_runs, num_cycles);
+  for x from 1 to num_runs do
+	['Starting run number: ' ^x]=>
+	go(num_cycles);
+    endfor;
+enddefine;
+
+
+define run_exp(num_runs, num_cycles);
+
+    ;;; redirect output to file
+    lvars stream=discout('results');
+    stream->cucharout;
+    
+    for x from 1 to num_runs do
+	['Starting run number: ' ^x]=>
+	    []->sim_instrumentation_data;
+	    []->sim_all_actors;
+	    ;;;	    []->newactors;
+	    lvars actors=[],slots=[],processedactors=[],processedslots=[];
+	    sim_instrument_class(class_example(tile_key), [sim_x sim_y]);
+	    sim_instrument_class(class_example(obstacle_key), [sim_x sim_y]);
+	    sim_instrument_class(class_example(hole_key), [sim_x sim_y]);
+	    go(num_cycles);
+
+
+	    ;;;Process Actor information
+	    ['Tileworld probability: ' ^(TW.new_hole_prob)]=>
+	    get_actors(sim_instrumentation_data)->actors;
+	    create_processed_data(actors)->processedactors;
+	    get_accesses(processedactors,sim_instrumentation_data);
+ 	    [The actors in the run were ^actors]=>
+	    [The detailed actors are ^sim_all_actors]=> 
+	    print_actors(processedactors);
+
+	    get_tile_agents(processedactors)->agents;
+	    
+	    get_shared_accesses_in(hd(agents),hd(tl(agents)),1,20)->list120;
+	    get_shared_accesses_in(hd(agents),hd(tl(agents)),21,40)->list2140;
+	    get_shared_accesses_in(hd(agents),hd(tl(agents)),41,60)->list4160;
+	    get_shared_accesses_in(hd(agents),hd(tl(agents)),61,80)->list6180;
+	    get_shared_accesses_in(hd(agents),hd(tl(agents)),81,100)->list81100;
+
+	   /* [The common accesses between 1 and 20 were ^list120]=>
+	    [The common accesses between 21 and 40 were ^list2140]=>
+	    [The common accesses between 41 and 60 were ^list4160]=>
+	    [The common accesses between 61 and 80 were ^list6180]=>
+	    [The common accesses between 81 and 100 were ^list81100]=>
+*/
+	    [The common accesses between 1 and 20 were ^(length(list120))/2]=>
+	    [The common accesses between 21 and 40 were ^(length(list2140))/2]=>
+	    [The common accesses between 41 and 60 were ^(length(list4160))/2]=>
+	    [The common accesses between 61 and 80 were ^(length(list6180))/2]=>
+	    [The common accesses between 81 and 100 were ^(length(list81100))/2]=>
+
+
+	     [The actors in the run were ^actors]=>
+	    [The detailed actors are ^sim_all_actors]=> 
+	    ;;;Slot stuff-----------
+	    ;;;get_slots(sim_instrumentation_data)->slots;
+	    ;;;create_processed_data_slots(slots)->processedslots;
+	    ;;;get_accesses_slots(processedslots,sim_instrumentation_data);
+
+	   
+	    ;;;print_slots(processedslots);
+    	endfor;
+
+enddefine;
+/*
+sim_instrument_class(class_example(tile_key), [sim_x sim_y]);
+sim_instrument_class(class_example(obstacle_key), [sim_x sim_y]);
+sim_instrument_class(class_example(hole_key), [sim_x sim_y]);
+go(100);
+
+get_actors(sim_instrumentation_data)->actors;
+get_slots(sim_instrumentation_data)->slots;
+
+create_processed_data(actors)->proccessedactors;
+create_processed_data_slots(slots)->processedslots;
+
+
+get_accesses(proccessedactors,sim_instrumentation_data);
+get_accesses_slots(processedslots,sim_instrumentation_data);
+get_shared_accesses(hd(proccessedactors),hd(tl(proccessedactors)))->common;
+get_shared_accesses_in(hd(proccessedactors),hd(tl(proccessedactors)),11,20)->common2;
+get_shared_accesses_in(hd(proccessedactors),hd(tl(proccessedactors)),21,30)->common3;
+[The actors in the run were ^actors]=>
+[The slots in the run were ^slots]=>
+[The detailed actors are ^sim_all_actors]=> 
+print_actors(proccessedactors);
+print_slots(processedslots);
+[The common accesses between ^(hd(proccessedactors).sim_datum_actor) and ^(hd(tl(proccessedactors)).sim_datum_actor) were ^(length(common))]=>
+[The common accesses between ^(hd(proccessedactors).sim_datum_actor) and ^(hd(tl(proccessedactors)).sim_datum_actor) were ^(length(common2))]=>
+common2=>
+[The common accesses between ^(hd(proccessedactors).sim_datum_actor) and ^(hd(tl(proccessedactors)).sim_datum_actor) were ^(length(common3))]=>
+common3=>
+*/
+
+
+;;;
+;;; isobstacle(hd(tl(sim_all_actors)))=>
+;;;    sim_rulesystem(hd(tl(sim_all_actors)))=>
+
+
+/*
+define seperate_actors(instrumentation_data);
+    lvars data,actor;
+
+    for actor in actorlist do
+	for data in instrumentation_data do
+	    if(data.sim_datum_actor=actor.sim_datum_actor) and
+ 		    cons(data, actor.accesslist)->actor.accesslist;
+	     	endfor;
+	    endfor;
+	
+     	enddefine;
+	
+	
+	
+define process_list_total(instrumentation_data);
+    lvars data;
+
+    for data in instrumentation_data do
+	if member(data.sim_datum_actor, actor_list) then
+	    if member(data.sim_datum_cycle, cyclelist) then
+		cons(data,
+
+
+	else
+	    cons
+	endif;
+    endfor;
+enddefine;
+
+*/

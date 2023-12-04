@@ -1,0 +1,228 @@
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [The actors in the run were [agent3 agent1 agent2]]
+** [The detailed actors are [<tile_agent: agent2> <tile_agent: agent3>
+	<tileworld: agent1>]]
+** [********]
+** [actor name : agent2]
+** [Number of accesses made by agent2 : 39643]
+** [Number of updates made by agent2 : 108]
+** [********]
+** [********]
+** [actor name : agent1]
+** [Number of accesses made by agent1 : 16669]
+** [Number of updates made by agent1 : 218]
+** [********]
+** [********]
+** [actor name : agent3]
+** [Number of accesses made by agent3 : 37425]
+** [Number of updates made by agent3 : 122]
+** [********]
+
+
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [The actors in the run were [agent5 agent4 agent6]]
+** [The detailed actors are [<tile_agent: agent5> <tile_agent: agent6>
+	<tileworld: agent4>]]
+** [********]
+** [actor name : agent6]
+** [Number of accesses made by agent6 : 35001]
+** [Number of updates made by agent6 : 86]
+** [********]
+** [********]
+** [actor name : agent4]
+** [Number of accesses made by agent4 : 15582]
+** [Number of updates made by agent4 : 222]
+** [********]
+** [********]
+** [actor name : agent5]
+** [Number of accesses made by agent5 : 34869]
+** [Number of updates made by agent5 : 48]
+** [********]
+
+
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [The actors in the run were [agent8 agent7 agent9]]
+** [The detailed actors are [<tile_agent: agent8> <tile_agent: agent9>
+	<tileworld: agent7>]]
+** [********]
+** [actor name : agent9]
+** [Number of accesses made by agent9 : 34637]
+** [Number of updates made by agent9 : 58]
+** [********]
+** [********]
+** [actor name : agent7]
+** [Number of accesses made by agent7 : 17233]
+** [Number of updates made by agent7 : 240]
+** [********]
+** [********]
+** [actor name : agent8]
+** [Number of accesses made by agent8 : 37925]
+** [Number of updates made by agent8 : 20]
+** [********]
+
+
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [The actors in the run were [agent10 agent12 agent11]]
+** [The detailed actors are [<tile_agent: agent11> <tile_agent: agent12>
+	<tileworld: agent10>]]
+** [********]
+** [actor name : agent11]
+** [Number of accesses made by agent11 : 40224]
+** [Number of updates made by agent11 : 94]
+** [********]
+** [********]
+** [actor name : agent12]
+** [Number of accesses made by agent12 : 40201]
+** [Number of updates made by agent12 : 86]
+** [********]
+** [********]
+** [actor name : agent10]
+** [Number of accesses made by agent10 : 17838]
+** [Number of updates made by agent10 : 236]
+** [********]
+
+
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [The actors in the run were [agent15 agent14 agent13]]
+** [The detailed actors are [<tile_agent: agent14> <tile_agent: agent15>
+	<tileworld: agent13>]]
+** [********]
+** [actor name : agent13]
+** [Number of accesses made by agent13 : 16681]
+** [Number of updates made by agent13 : 234]
+** [********]
+** [********]
+** [actor name : agent14]
+** [Number of accesses made by agent14 : 34553]
+** [Number of updates made by agent14 : 58]
+** [********]
+** [********]
+** [actor name : agent15]
+** [Number of accesses made by agent15 : 35575]
+** [Number of updates made by agent15 : 72]
+** [********]
+
+
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [The actors in the run were [agent18 agent17 agent16]]
+** [The detailed actors are [<tile_agent: agent18> <tile_agent: agent17>
+	<tileworld: agent16>]]
+** [********]
+** [actor name : agent16]
+** [Number of accesses made by agent16 : 13781]
+** [Number of updates made by agent16 : 196]
+** [********]
+** [********]
+** [actor name : agent17]
+** [Number of accesses made by agent17 : 34856]
+** [Number of updates made by agent17 : 62]
+** [********]
+** [********]
+** [actor name : agent18]
+** [Number of accesses made by agent18 : 34018]
+** [Number of updates made by agent18 : 80]
+** [********]
+
+
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [The actors in the run were [agent21 agent20 agent19]]
+** [The detailed actors are [<tile_agent: agent21> <tile_agent: agent20>
+	<tileworld: agent19>]]
+** [********]
+** [actor name : agent19]
+** [Number of accesses made by agent19 : 17115]
+** [Number of updates made by agent19 : 234]
+** [********]
+** [********]
+** [actor name : agent20]
+** [Number of accesses made by agent20 : 35261]
+** [Number of updates made by agent20 : 80]
+** [********]
+** [********]
+** [actor name : agent21]
+** [Number of accesses made by agent21 : 34407]
+** [Number of updates made by agent21 : 50]
+** [********]
+
+
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [The actors in the run were [agent22 agent24 agent23]]
+** [The detailed actors are [<tile_agent: agent24> <tile_agent: agent23>
+	<tileworld: agent22>]]
+** [********]
+** [actor name : agent23]
+** [Number of accesses made by agent23 : 43204]
+** [Number of updates made by agent23 : 124]
+** [********]
+** [********]
+** [actor name : agent24]
+** [Number of accesses made by agent24 : 41111]
+** [Number of updates made by agent24 : 78]
+** [********]
+** [********]
+** [actor name : agent22]
+** [Number of accesses made by agent22 : 17509]
+** [Number of updates made by agent22 : 226]
+** [********]
+
+
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [The actors in the run were [agent26 agent25 agent27]]
+** [The detailed actors are [<tile_agent: agent27> <tile_agent: agent26>
+	<tileworld: agent25>]]
+** [********]
+** [actor name : agent27]
+** [Number of accesses made by agent27 : 38342]
+** [Number of updates made by agent27 : 82]
+** [********]
+** [********]
+** [actor name : agent25]
+** [Number of accesses made by agent25 : 15143]
+** [Number of updates made by agent25 : 214]
+** [********]
+** [********]
+** [actor name : agent26]
+** [Number of accesses made by agent26 : 35994]
+** [Number of updates made by agent26 : 68]
+** [********]
+
+** [about to draw the tileworld <true>]
+
+============== Finished. Cycle 100 ============
+** [The actors in the run were [agent30 agent29 agent28]]
+** [The detailed actors are [<tile_agent: agent29> <tile_agent: agent30>
+	<tileworld: agent28>]]
+** [********]
+** [actor name : agent28]
+** [Number of accesses made by agent28 : 22054]
+** [Number of updates made by agent28 : 256]
+** [********]
+** [********]
+** [actor name : agent29]
+** [Number of accesses made by agent29 : 40308]
+** [Number of updates made by agent29 : 88]
+** [********]
+** [********]
+** [actor name : agent30]
+** [Number of accesses made by agent30 : 40403]
+** [Number of updates made by agent30 : 90]
+** [********]
+:

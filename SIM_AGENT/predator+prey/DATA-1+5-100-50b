@@ -1,0 +1,101 @@
+: run_simulation(400, 10, 10, 1, 5, 100, 50);
+Probability: 0 agents 0.712198 1 agents 0.206836 2 agents 0.06216 3 agents
+	0.016368 4 agents 0.002419 5 agents 0.000019 6 agents 0.0
+Probability: 0 agents 0.688355 1 agents 0.237678 2 agents 0.061567 3 agents
+	0.011075 4 agents 0.001315 5 agents 0.000009 6 agents 0.0
+Probability: 0 agents 0.67431 1 agents 0.26098 2 agents 0.055837 3 agents
+	0.00799 4 agents 0.000877 5 agents 0.000006 6 agents 0.0
+Probability: 0 agents 0.669308 1 agents 0.267038 2 agents 0.055398 3 agents
+	0.007594 4 agents 0.000657 5 agents 0.000005 6 agents 0.0
+Probability: 0 agents 0.672085 1 agents 0.263163 2 agents 0.053009 3 agents
+	0.010928 4 agents 0.000812 5 agents 0.000004 6 agents 0.0
+Probability: 0 agents 0.665211 1 agents 0.269162 2 agents 0.055449 3 agents
+	0.009499 4 agents 0.000676 5 agents 0.000003 6 agents 0.0
+Probability: 0 agents 0.663475 1 agents 0.270202 2 agents 0.054201 3 agents
+	0.0115 4 agents 0.000619 5 agents 0.000003 6 agents 0.0
+Probability: 0 agents 0.66323 1 agents 0.270108 2 agents 0.055296 3 agents
+	0.01082 4 agents 0.000542 5 agents 0.000002 6 agents 0.0
+Probability: 0 agents 0.665725 1 agents 0.26552 2 agents 0.057002 3 agents
+	0.011233 4 agents 0.000519 5 agents 0.000002 6 agents 0.0
+Probability: 0 agents 0.66705 1 agents 0.263587 2 agents 0.058631 3 agents
+	0.010264 4 agents 0.000467 5 agents 0.000002 6 agents 0.0
+Probability: 0 agents 0.667326 1 agents 0.263252 2 agents 0.058557 3 agents
+	0.010438 4 agents 0.000424 5 agents 0.000002 6 agents 0.0
+Probability: 0 agents 0.67169 1 agents 0.259367 2 agents 0.057508 3 agents
+	0.0104 4 agents 0.000995 5 agents 0.00004 6 agents 0.0
+Probability: 0 agents 0.671006 1 agents 0.260224 2 agents 0.057999 3 agents
+	0.009815 4 agents 0.000919 5 agents 0.000037 6 agents 0.0
+Probability: 0 agents 0.670826 1 agents 0.260152 2 agents 0.058584 3 agents
+	0.009535 4 agents 0.000868 5 agents 0.000035 6 agents 0.0
+Probability: 0 agents 0.668803 1 agents 0.264374 2 agents 0.056665 3 agents
+	0.009316 4 agents 0.00081 5 agents 0.000032 6 agents 0.0
+Probability: 0 agents 0.668853 1 agents 0.264662 2 agents 0.056765 3 agents
+	0.00893 4 agents 0.00076 5 agents 0.00003 6 agents 0.0
+Probability: 0 agents 0.670933 1 agents 0.26223 2 agents 0.057047 3 agents
+	0.008959 4 agents 0.000804 5 agents 0.000029 6 agents 0.0
+Probability: 0 agents 0.674617 1 agents 0.258209 2 agents 0.056634 3 agents
+	0.009389 4 agents 0.001124 5 agents 0.000027 6 agents 0.0
+Probability: 0 agents 0.674608 1 agents 0.259197 2 agents 0.056173 3 agents
+	0.008932 4 agents 0.001065 5 agents 0.000026 6 agents 0.0
+Probability: 0 agents 0.672503 1 agents 0.26094 2 agents 0.057006 3 agents
+	0.008515 4 agents 0.001012 5 agents 0.000024 6 agents 0.0
+Probability: 0 agents 0.673674 1 agents 0.260467 2 agents 0.056509 3 agents
+	0.008363 4 agents 0.000964 5 agents 0.000023 6 agents 0.0
+Probability: 0 agents 0.674354 1 agents 0.259482 2 agents 0.057073 3 agents
+	0.008149 4 agents 0.00092 5 agents 0.000022 6 agents 0.0
+Probability: 0 agents 0.675714 1 agents 0.258001 2 agents 0.056825 3 agents
+	0.008355 4 agents 0.001081 5 agents 0.000024 6 agents 0.0
+Probability: 0 agents 0.676802 1 agents 0.256681 2 agents 0.056808 3 agents
+	0.008523 4 agents 0.001163 5 agents 0.000023 6 agents 0.0
+Probability: 0 agents 0.677783 1 agents 0.255455 2 agents 0.056811 3 agents
+	0.008599 4 agents 0.001331 5 agents 0.000022 6 agents 0.0
+Probability: 0 agents 0.677454 1 agents 0.255656 2 agents 0.057097 3 agents
+	0.008493 4 agents 0.00128 5 agents 0.000021 6 agents 0.0
+Probability: 0 agents 0.677767 1 agents 0.254575 2 agents 0.058043 3 agents
+	0.00836 4 agents 0.001234 5 agents 0.00002 6 agents 0.0
+Probability: 0 agents 0.67847 1 agents 0.253999 2 agents 0.057903 3 agents
+	0.008308 4 agents 0.001301 5 agents 0.00002 6 agents 0.0
+Probability: 0 agents 0.677494 1 agents 0.255467 2 agents 0.05767 3 agents
+	0.008094 4 agents 0.001256 5 agents 0.000019 6 agents 0.0
+Probability: 0 agents 0.676925 1 agents 0.255501 2 agents 0.057889 3 agents
+	0.008453 4 agents 0.001214 5 agents 0.000018 6 agents 0.0
+Probability: 0 agents 0.676205 1 agents 0.255591 2 agents 0.058558 3 agents
+	0.008454 4 agents 0.001175 5 agents 0.000018 6 agents 0.0
+Probability: 0 agents 0.677109 1 agents 0.254565 2 agents 0.058286 3 agents
+	0.008809 4 agents 0.001213 5 agents 0.000017 6 agents 0.0
+Probability: 0 agents 0.67566 1 agents 0.255975 2 agents 0.058596 3 agents
+	0.008576 4 agents 0.001176 5 agents 0.000017 6 agents 0.0
+Probability: 0 agents 0.677207 1 agents 0.254179 2 agents 0.058515 3 agents
+	0.008772 4 agents 0.001311 5 agents 0.000016 6 agents 0.0
+Probability: 0 agents 0.675851 1 agents 0.255554 2 agents 0.05869 3 agents
+	0.008615 4 agents 0.001274 5 agents 0.000016 6 agents 0.0
+Probability: 0 agents 0.676042 1 agents 0.255057 2 agents 0.059004 3 agents
+	0.008625 4 agents 0.001257 5 agents 0.000015 6 agents 0.0
+Probability: 0 agents 0.674782 1 agents 0.256363 2 agents 0.059176 3 agents
+	0.00844 4 agents 0.001223 5 agents 0.000015 6 agents 0.0
+Probability: 0 agents 0.673412 1 agents 0.257959 2 agents 0.059101 3 agents
+	0.008323 4 agents 0.001191 5 agents 0.000014 6 agents 0.0
+Probability: 0 agents 0.674266 1 agents 0.257086 2 agents 0.059192 3 agents
+	0.00828 4 agents 0.001162 5 agents 0.000014 6 agents 0.0
+Probability: 0 agents 0.674941 1 agents 0.256575 2 agents 0.059075 3 agents
+	0.008263 4 agents 0.001133 5 agents 0.000014 6 agents 0.0
+Probability: 0 agents 0.674544 1 agents 0.256721 2 agents 0.05914 3 agents
+	0.008477 4 agents 0.001105 5 agents 0.000013 6 agents 0.0
+Probability: 0 agents 0.674358 1 agents 0.257033 2 agents 0.059052 3 agents
+	0.008465 4 agents 0.001079 5 agents 0.000013 6 agents 0.0
+Probability: 0 agents 0.674101 1 agents 0.257512 2 agents 0.058944 3 agents
+	0.008376 4 agents 0.001054 5 agents 0.000013 6 agents 0.0
+Probability: 0 agents 0.675029 1 agents 0.256822 2 agents 0.058211 3 agents
+	0.008623 4 agents 0.001238 5 agents 0.000077 6 agents 0.0
+Probability: 0 agents 0.674748 1 agents 0.257152 2 agents 0.058124 3 agents
+	0.008672 4 agents 0.001228 5 agents 0.000075 6 agents 0.0
+Probability: 0 agents 0.675354 1 agents 0.256149 2 agents 0.05855 3 agents
+	0.008614 4 agents 0.001259 5 agents 0.000074 6 agents 0.0
+Probability: 0 agents 0.675648 1 agents 0.255787 2 agents 0.058636 3 agents
+	0.008618 4 agents 0.001239 5 agents 0.000072 6 agents 0.0
+Probability: 0 agents 0.67445 1 agents 0.257178 2 agents 0.058644 3 agents
+	0.008445 4 agents 0.001213 5 agents 0.000071 6 agents 0.0
+Probability: 0 agents 0.675032 1 agents 0.257192 2 agents 0.058117 3 agents
+	0.008401 4 agents 0.001188 5 agents 0.000069 6 agents 0.0
+Probability: 0 agents -0.665885 1 agents 0.255782 2 agents 0.057764 3 agents
+	0.008704 4 agents 0.001332 5 agents 0.000104 6 agents 0.00002

@@ -1,0 +1,925 @@
+//-----------------------------------------------------------------
+// Project Include Files
+//-----------------------------------------------------------------
+
+#include "SimFederateAmbassador.hh"
+#include "globals.hh"
+//#include "FedAmbGlobals.hh"
+
+//-----------------------------------------------------------------
+//The following include contains all the appropriate storage datatypes
+//and functions. It also contains the 'get' functions poplog calls to
+//get any callbacks
+//-----------------------------------------------------------------
+//#include "tileWorld.hh"
+
+#include <fedtime.hh>
+#include "llist.hh"
+//-----------------------------------------------------------------
+// System Include Files
+//-----------------------------------------------------------------
+#ifndef _MSC_VER
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream.h>
+#else
+#include <iostream>
+using std::cout;
+using std::cerr;
+using std::endl;
+#endif
+
+//-----------------------------------------------------------------
+// FILE: FedAmbWrapper
+//
+// This File is used in the SIM_AGENT-HLA interface.  It defines a c++
+// federate ambassador class similar to any other.  When a Callback is
+// made to the federate ambassador the callback is stored in some c++
+// format. This is to avoid direct call backs to poplog. It is up to
+// the poplog side to call external C functions ('get' style
+// functions) when updates are required. Therefore when the RTI makes
+// the FederateAmbassador callbacks all the federate ambassador must
+// do is store the appropriate details of the callback in some C data
+// structure.
+// 
+// Created 04/04/02
+// Author - Michael Lees (mhl@cs.nott.ac.uk)
+//-----------------------------------------------------------------
+
+//-----------------------------------------------------------------
+// The current 'datatypes' that need to be stored
+//
+// Each callback has a certain number of parameters it passes, so for
+// example a discovery callback (when the RTI informs the appropriate
+// federates of a new object instance) passes the Object Handle, the
+// Object Name and the class handle (to which the object belongs). As
+// each callback may pass different parameters the requirements for
+// temporary storage will be different for different types of
+// callback(although 2 different callbacks may pass the same
+// paramaters).  The following is a list of the different sets of
+// parameters that are passed by all the callbacks implemented in this
+// file. 
+//
+//
+// 1.-Object Handle - unsigned long,
+//    Object Name - string (char*),
+//    Class Handle - unsigned long.
+//
+// 2.-Object Handle - unsigned long
+//    AHVPSet - An instance of the class?
+//    The time - FedTime object
+//    the tag - string (char*)
+//    Retraction Handle - unsigned long
+//
+// 3.-Object Handle - unsigned long
+//    the tag - string (char*)
+//
+// 4.-Object Handle - unsigned long
+//    AHSet - An instance of the class?
+//
+// 5.-The time - FedTime object
+//
+// The question is whether to make 5 different datatypes one for each
+// set of parameters or make one datatype which is the union of all
+// possible parameters(any paramters not passed would be NULL or 0).
+// The first method saves on memory but implementation is slightly
+// messy. The second wastes memory but one generic datatype may be more
+// appealing when adding other callbacks and hence parameters.
+//
+// Another question is then how to store multiple copies of these
+// callbacks. An obvious way to store multiple copies would be through
+// some implementation of a linked list of the appropiate datatypes.
+// The question is whether to have a single linked list containing all
+// callbacks or to have a linked list for each type of callback. The
+// second option would allow federates to (quickly) request callbacks
+// of a particular type.
+//
+//----------------------------------------------------------------
+
+//----------------------------------------------------------------
+//Here we define (globally) various linked lists which store each type
+//of callback. It may be the case that at some point one list is used
+//for all types of callback rather than a different linked list for
+//each type of callback. The basic idea is that the callback methods
+//defined in this file will simply add a new item (NODE) to the linked
+//list adding the relevant info to the item. For example the callback
+//discoverObjectInstance passes the following information
+//ObjectHandle, ObjectClassHandle and the objectsName. The code should
+//therefore add a new node to the discoverObjectInstance list and
+//enter the three fore mentioned values into the item.
+//Poplog would then get the callback by calling the relevant get method
+//for the particular type of callback.
+//
+//----------------------------------------------------------------
+
+
+
+//////////////////////////////
+//
+// Now we have the get functions, one for each
+// linked list. The get functions simply dequeue
+// the appropriate list.
+//
+//////////////////////////////
+
+void print_timeConstrainedEnabled()
+{
+  NODE *temp;
+  temp = timeConstrainedEnabled_q->head;
+  cout <<"Object handle: "<<temp->objectHandle;
+}
+
+void print_discoverObjectInstance()
+{
+  NODE *temp;
+  temp = discoverObjectInstance_q->head;
+  cout <<"Object handle: "<<temp->objectHandle;
+}
+
+SimFederateAmbassador::SimFederateAmbassador()
+{
+}
+
+SimFederateAmbassador::~SimFederateAmbassador()
+throw(RTI::FederateInternalError)
+{
+   cerr << "FED_HW: TwFederateAmbassador::~TwFederateAmbassador destructor called in FED" << endl;
+}
+
+////////////////////////////////
+// Object Management Services //
+////////////////////////////////
+//
+// Methods currently implemented
+//
+// 6.3 discoverObjectInstance
+// 6.5 reflectAttributeValues
+// 6.9 removeObjectInstance (*2)
+// 6.16 provideAttributeValueUpdate
+// 
+////////////////////////////////
+
+
+
+void SimFederateAmbassador::discoverObjectInstance (
+  RTI::ObjectHandle          theObject,      
+  RTI::ObjectClassHandle     theObjectClass, 
+  const char *          theObjectName)  
+throw (
+  RTI::CouldNotDiscover,
+  RTI::ObjectClassNotKnown,
+  RTI::FederateInternalError)
+{
+  // This function should create a new object of the specified type
+  // However this should be done on the poplog side.
+  // All the c++ function should do is store the message parameters in some
+  // datatype which poplog can access
+
+  //Parameters to be stored-
+  //1. Object Handle - unsigned long
+  //2. Class Handle - unsigned long
+  //3. Object Name - string (char*)
+
+  //Allocate space for callback storage
+  NODE *theCallBack = new NODE;
+  
+  //Store values of this callback 
+  theCallBack->objectHandle=theObject;
+  theCallBack->classHandle=theObjectClass;
+  theCallBack->name=theObjectName;
+
+  //enqueue this callback onto the list for this type of callback
+  enqueue(discoverObjectInstance_q,theCallBack);
+
+}
+
+void SimFederateAmbassador::reflectAttributeValues (
+        RTI::ObjectHandle                 theObject,     
+  const RTI::AttributeHandleValuePairSet& ahvpset, 
+  const RTI::FedTime&                     theTime,       
+  const char                             *theTag,        
+        RTI::EventRetractionHandle        theHandle)     
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::FederateOwnsAttributes,
+  RTI::InvalidFederationTime,
+  RTI::FederateInternalError)
+{
+  //Parameters to be stored-
+  //1. Object Handle - unsigned long
+  //2. AHVPSet - An instance of the class?
+  //3. The time - FedTime object
+  //4. the tag - string (char*)
+  //5. Retraction Handle - unsigned long
+
+  //Allocate space for callback storage
+  NODE *theCallBack = new NODE;
+    
+  //Get the number of attribute handle pairs in the set
+  RTI::ULong count =ahvpset.size();
+  AttributeHandleValuePair *updateAttributes;
+  updateAttributes = new AttributeHandleValuePair[count];
+  //Loop through all the attribute handle pairs
+  for(RTI::ULong index =0;index<count;++index){
+    //get the handle
+    updateAttributes[index].Id = ahvpset.getHandle(index);
+    //get the value length
+    updateAttributes[index].length = ahvpset.getValueLength(index);
+
+
+    if (!(updateAttributes[index].value = (char *) malloc (updateAttributes[index].length) )){
+      /* no memory left, die */
+      exit(1);
+    }
+    //get the value
+    ahvpset.getValue(index,updateAttributes[index].value,updateAttributes[index].length);
+  }
+  //Store values of this callback
+  theCallBack->objectHandle=theObject;
+  theCallBack->AHVPset=updateAttributes;
+  //  theCallBack->theTime=theTime;
+  theCallBack->tag=theTag;
+
+
+  // theCallBack->eventRetractionHandle=(unsigned long)theHandle;
+  
+  //enqueue this callback onto the list for this type of callback
+  enqueue(reflectAttributeValues_q,theCallBack);
+}
+
+void SimFederateAmbassador::removeObjectInstance (
+        RTI::ObjectHandle          theObject, 
+  const RTI::FedTime&              theTime,   
+  const char                      *theTag,    
+        RTI::EventRetractionHandle theHandle) 
+throw (
+  RTI::ObjectNotKnown,
+  RTI::InvalidFederationTime,
+  RTI::FederateInternalError)
+{
+   //-----------------------------------------------------------------
+   // Call the other removeObject method since this should probably
+   //  be implemented using default parameter values.
+   //-----------------------------------------------------------------
+   this->removeObjectInstance( theObject, theTag );
+}
+
+void SimFederateAmbassador::removeObjectInstance (
+        RTI::ObjectHandle          theObject, 
+  const char                      *theTag)   
+throw (
+  RTI::ObjectNotKnown,
+  RTI::FederateInternalError)
+{
+  //Parameters to be stored-
+  //1. Object Handle - unsigned long
+  //2. the tag - string (char*)
+
+  //Allocate space for callback storage
+  NODE *theCallBack = new NODE;
+  
+  //Store values of this callback 
+  theCallBack->objectHandle=theObject;
+  theCallBack->tag=theTag;
+
+  //enqueue this callback onto the list for this type of callback
+  enqueue(removeObjectInstance_q,theCallBack);
+}
+
+
+void SimFederateAmbassador::provideAttributeValueUpdate (
+        RTI::ObjectHandle        theObject,     
+  const RTI::AttributeHandleSet& ahset)
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::AttributeNotOwned,
+  RTI::FederateInternalError)
+{
+  //Parameters to be stored-
+  //1. Object Handle - unsigned long
+  //2. AHSet - An instance of the class?  
+
+  //Allocate space for callback storage
+  NODE *theCallBack = new NODE;
+    
+  //Get size of handle set
+  RTI::ULong count =ahset.size();
+  RTI::ULong *attributeArray = new RTI::ULong[count];
+  
+  //Loop through all the attribute handle pairs
+  for(RTI::ULong index =0;index<count;++index){
+    //get the handle
+    attributeArray[index] = ahset.getHandle(index);
+  } 
+  //Store values of this callback 
+  theCallBack->objectHandle=theObject;
+  theCallBack->theAttributes=attributeArray;
+
+  //enqueue this callback onto the list for this type of callback
+  enqueue(provideAttributeValueUpdate_q,theCallBack);
+
+ 
+}
+
+
+////////////////////////////////
+// Ownership Management       //
+////////////////////////////////
+//
+// Methods currently implemented
+//
+// 7.5 attributeOwnershipDivestitureNotification
+// 7.6 attributeOwnershipAcquisitionNotification
+// 7.9 attributeOwnershipUnavailable
+//
+/////////////////////////////////
+
+
+void SimFederateAmbassador::attributeOwnershipDivestitureNotification(
+        RTI::ObjectHandle        theObject,     
+  const RTI::AttributeHandleSet& ahset) 
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::AttributeNotOwned,
+  RTI::AttributeDivestitureWasNotRequested,
+  RTI::FederateInternalError
+  )
+{
+  //Parameters to be stored-
+  //1. Object Handle - unsigned long
+  //2. AHSet - An instance of the class?  
+  
+  //Allocate space for callback storage
+  NODE *theCallBack = new NODE;
+    
+  //Get size of handle set
+  RTI::ULong count =ahset.size();
+  RTI::ULong *attributeArray = new RTI::ULong[count];
+  
+  //Loop through all the attribute handle pairs
+  for(RTI::ULong index =0;index<count;++index){
+    //get the handle
+    attributeArray[index] = ahset.getHandle(index);
+  } 
+  //Store values of this callback 
+  theCallBack->objectHandle=theObject;
+  theCallBack->theAttributes=attributeArray;
+
+  //enqueue this callback onto the list for this type of callback
+  enqueue(attributeOwnershipDivestitureNotification_q,theCallBack);
+}
+
+
+void SimFederateAmbassador::attributeOwnershipAcquisitionNotification(
+	RTI::ObjectHandle        theObject,   
+	const RTI::AttributeHandleSet& ahset) 
+throw (								     
+ RTI::ObjectNotKnown,
+ RTI::AttributeNotKnown,
+ RTI::AttributeAcquisitionWasNotRequested,
+ RTI::AttributeAlreadyOwned,
+ RTI::AttributeNotPublished,
+ RTI::FederateInternalError
+ )
+{
+  //Parameters to be stored-
+  //1. Object Handle - unsigned long
+  //2. AHSet - An instance of the class?  
+
+  
+  //Allocate space for callback storage
+  NODE *theCallBack = new NODE;
+    
+  //Get size of handle set
+  RTI::ULong count =ahset.size();
+  RTI::ULong *attributeArray = new RTI::ULong[count];
+  
+  //Loop through all the attribute handle pairs
+  for(RTI::ULong index =0;index<count;++index){
+    //get the handle
+    attributeArray[index] = ahset.getHandle(index);
+  } 
+  //Store values of this callback 
+  theCallBack->objectHandle=theObject;
+  theCallBack->theAttributes=attributeArray;
+
+  //enqueue this callback onto the list for this type of callback
+  enqueue(attributeOwnershipAcquisitionNotification_q,theCallBack);
+}
+
+
+void SimFederateAmbassador::attributeOwnershipUnavailable(
+	RTI::ObjectHandle        theObject,    
+	const RTI::AttributeHandleSet& ahset) 
+throw (								     
+ RTI::ObjectNotKnown,
+ RTI::AttributeNotKnown,
+ RTI::AttributeAlreadyOwned,
+ RTI::AttributeAcquisitionWasNotRequested,
+ RTI::FederateInternalError
+ )
+{
+  //Parameters to be stored-
+  //1. Object Handle - unsigned long
+  //2. AHSet - An instance of the class?  
+
+
+ //Allocate space for callback storage
+  NODE *theCallBack = new NODE;
+    
+  //Get size of handle set
+  RTI::ULong count =ahset.size();
+  RTI::ULong *attributeArray = new RTI::ULong[count];
+  
+  //Loop through all the attribute handle pairs
+  for(RTI::ULong index =0;index<count;++index){
+    //get the handle
+    attributeArray[index] = ahset.getHandle(index);
+  } 
+  //Store values of this callback 
+  theCallBack->objectHandle=theObject;
+  theCallBack->theAttributes=attributeArray;
+
+  //enqueue this callback onto the list for this type of callback
+  enqueue(attributeOwnershipUnavailable_q,theCallBack);
+}
+
+////////////////////////////////
+// Time Management            //
+////////////////////////////////
+//
+// Methods currently implemented
+// 
+// 8.3 timeRegulationEnabled 
+// 8.6 timeConstrainedEnabled
+// 8.13 timeAdvanceGrant
+//
+/////////////////////////////////
+
+
+void SimFederateAmbassador::timeRegulationEnabled (
+ const  RTI::FedTime& theFedTime) 
+throw (
+  RTI::InvalidFederationTime,
+  RTI::EnableTimeRegulationWasNotPending,
+  RTI::FederateInternalError)
+{
+  //Parameters to be stored-
+  //1. The time - FedTime object
+ 
+  //Allocate space for callback storage
+  NODE_t *theCallBack = new NODE;
+
+  cout<<"The fed time"<<theFedTime;
+  //Create a temp class so we can get value
+  RTIfedTime mytime(0);
+  mytime=theFedTime;
+  //store the time in double format
+  theCallBack->theTime = mytime.getTime();
+
+  cout<<"Mytime"<<mytime.getTime();
+  //enqueue this callback onto the list for this type of callback
+  enqueue(timeAdvanceGrant_q,theCallBack);
+  //Store values of this callback 
+  
+  //  theCallBack->theTime=theFederateTime;
+
+  //enqueue this callback onto the list for this type of callback
+  enqueue(timeRegulationEnabled_q,theCallBack);
+}
+
+void SimFederateAmbassador::timeConstrainedEnabled (
+  const RTI::FedTime& theFederateTime) 
+throw (
+  RTI::InvalidFederationTime,
+  RTI::EnableTimeConstrainedWasNotPending,
+  RTI::FederateInternalError)
+{
+  //Parameters to be stored-
+  //1. The time - FedTime object
+  RTI::FedTime &          grantTime=(*(RTI::FedTimeFactory::makeZero()));
+  //Allocate space for callback storage
+  grantTime=theFederateTime;
+  
+  NODE *theCallback = new NODE;
+  
+  /*
+  RTI::Double doubletime;
+  RTIfedTime mytime(0);
+  mytime+=theFederateTime;
+  doubletime=mytime.getTime();
+  cout<<"The time "<<doubletime;
+  */
+  //makeNODE(&theCallback);
+
+  //Store values of this callback 
+    //  mytime=*theFederateTime;
+  //  doubletime = theFederateTime.getTime();
+  //This causes seg fault at the moment not sure why
+  //  theCallback->theTime=&theFederateTime;
+
+  cout<<"Received something";
+
+  //enqueue this callback onto the list for this type of callback
+  enqueue(timeConstrainedEnabled_q,theCallback);
+}
+
+void SimFederateAmbassador::timeAdvanceGrant (
+  const RTI::FedTime& theFedTime) 
+throw (
+  RTI::InvalidFederationTime,
+  RTI::TimeAdvanceWasNotInProgress,
+  RTI::FederateInternalError)
+{
+ //Parameters to be stored-
+  //1. The time - FedTime object
+
+  //Allocate space for callback storage
+  NODE_t *theCallBack = new NODE;
+
+  cout<<"The fed time"<<theFedTime;
+  //Create a temp class so we can get value
+  RTIfedTime mytime(0);
+  mytime=theFedTime;
+  //store the time in double format
+  theCallBack->theTime = mytime.getTime();
+
+  cout<<"Mytime"<<mytime.getTime();
+  //enqueue this callback onto the list for this type of callback
+  enqueue(timeAdvanceGrant_q,theCallBack);
+ 
+
+  cout<<"----------------------------------"<<endl;
+  cout<<"Pointer in fed amb is: "<<timeAdvanceGrant_q->head<<endl;
+  cout<<"The time in the queue in fed amb is: "<<timeAdvanceGrant_q->head->theTime<<endl;
+  cout<<"----------------------------------"<<endl;
+  timeAdvGrant=RTI::RTI_TRUE;
+ 
+
+}
+
+/////////////////////////
+//Other undefined methods
+/////////////////////////
+
+void SimFederateAmbassador::synchronizationPointRegistrationSucceeded (
+  const char *label) // supplied C4)
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: synchronizationPointRegistrationSucceeded not supported in FED"
+        << endl;
+}
+
+void SimFederateAmbassador::synchronizationPointRegistrationFailed (
+  const char *label) // supplied C4)
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: synchronizationPointRegistrationFailed not supported in FED"
+        << endl;
+}
+
+void SimFederateAmbassador::announceSynchronizationPoint (
+  const char *label, // supplied C4
+  const char *tag)   // supplied C4
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: announceSynchronizationPoint not supported in FED" << endl;
+}
+
+void SimFederateAmbassador::federationSynchronized (
+  const char *label) // supplied C4)
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: federationSynchronized not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::initiateFederateSave (
+  const char *label) // supplied C4
+throw (
+  RTI::UnableToPerformSave,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: initiateFederateSave not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::federationSaved ()
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: federationSaved not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::federationNotSaved ()
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: federationNotSaved not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::requestFederationRestoreSucceeded (
+  const char *label) // supplied C4
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: requestFederationRestoreSucceeded not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::requestFederationRestoreFailed (
+  const char *label) // supplied C4
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: requestFederationRestoreFailed not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::requestFederationRestoreFailed (
+  const char *label,
+  const char *reason) // supplied C4
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: requestFederationRestoreFailed not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::federationRestoreBegun ()
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: federationRestoreBegun not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::initiateFederateRestore (
+  const char               *label,   // supplied C4
+        RTI::FederateHandle handle)  // supplied C1
+throw (
+  RTI::SpecifiedSaveLabelDoesNotExist,
+  RTI::CouldNotRestore,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: initiateFederateRestore not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::federationRestored ()
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: federationRestored not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::federationNotRestored ()
+throw (
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: federationNotRestored not supported in FED" << endl;
+}
+
+
+/////////////////////////////////////
+// Declaration Management Services //
+/////////////////////////////////////
+
+void SimFederateAmbassador::startRegistrationForObjectClass (
+        RTI::ObjectClassHandle   theClass)      // supplied C1
+throw (
+  RTI::ObjectClassNotPublished,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: startRegistrationForObjectClass not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::stopRegistrationForObjectClass (
+        RTI::ObjectClassHandle   theClass)      // supplied C1
+throw (
+  RTI::ObjectClassNotPublished,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: stopRegistrationForObjectClass not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::turnInteractionsOn (
+  RTI::InteractionClassHandle theHandle) // supplied C1
+throw (
+  RTI::InteractionClassNotPublished,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: turnInteractionsOn not supported in FED" << endl;
+}
+
+void SimFederateAmbassador::turnInteractionsOff (
+  RTI::InteractionClassHandle theHandle) // supplied C1
+throw (
+  RTI::InteractionClassNotPublished,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: turnInteractionsOff not supported in FED" << endl;
+}
+
+////////////////////////////////
+// Object Management Services //
+////////////////////////////////
+
+
+void SimFederateAmbassador::reflectAttributeValues (
+        RTI::ObjectHandle                 theObject,     // supplied C1
+  const RTI::AttributeHandleValuePairSet& theAttributes, // supplied C4
+  const char                             *theTag)        // supplied C4
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::FederateOwnsAttributes,
+  RTI::FederateInternalError)
+{
+  //not supported yet
+
+}
+
+
+
+void SimFederateAmbassador::receiveInteraction (
+        RTI::InteractionClassHandle       theInteraction, // supplied C1
+  const RTI::ParameterHandleValuePairSet& theParameters,  // supplied C4
+  const RTI::FedTime&                     theTime,        // supplied C4
+  const char                             *theTag,         // supplied C4
+        RTI::EventRetractionHandle        theHandle)      // supplied C1
+throw (
+  RTI::InteractionClassNotKnown,
+  RTI::InteractionParameterNotKnown,
+  RTI::InvalidFederationTime,
+  RTI::FederateInternalError)
+{
+   this->receiveInteraction( theInteraction, theParameters, theTag );
+}
+
+void SimFederateAmbassador::receiveInteraction (
+        RTI::InteractionClassHandle       theInteraction, // supplied C1
+  const RTI::ParameterHandleValuePairSet& theParameters,  // supplied C4
+  const char                             *theTag)         // supplied C4
+throw (
+  RTI::InteractionClassNotKnown,
+  RTI::InteractionParameterNotKnown,
+  RTI::FederateInternalError)
+{
+  //Not supported
+  
+}
+
+
+void SimFederateAmbassador::attributesInScope (
+        RTI::ObjectHandle        theObject,     // supplied C1
+  const RTI::AttributeHandleSet& theAttributes) // supplied C4
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: attributesInScope not supported in FED" << endl;
+}
+
+void SimFederateAmbassador::attributesOutOfScope (
+        RTI::ObjectHandle        theObject,     // supplied C1
+  const RTI::AttributeHandleSet& theAttributes) // supplied C4
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: attributesOutOfScope not supported in FED" << endl;
+}
+
+
+
+void SimFederateAmbassador::turnUpdatesOnForObjectInstance (
+        RTI::ObjectHandle        theObject,     // supplied C1
+  const RTI::AttributeHandleSet& theAttributes) // supplied C4
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotOwned,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: turnUpdatesOnForObjectInstance not supported in FED" << endl;
+}
+
+void SimFederateAmbassador::turnUpdatesOffForObjectInstance (
+        RTI::ObjectHandle        theObject,      // supplied C1
+  const RTI::AttributeHandleSet& theAttributes) // supplied C4
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotOwned,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: turnUpdatesOffForObjectInstance not supported in FED" << endl;
+}
+
+///////////////////////////////////
+// Ownership Management Services //
+///////////////////////////////////
+
+void SimFederateAmbassador::requestAttributeOwnershipAssumption (
+        RTI::ObjectHandle        theObject,         // supplied C1
+  const RTI::AttributeHandleSet& offeredAttributes, // supplied C4
+  const char                    *theTag)            // supplied C4
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::AttributeAlreadyOwned,
+  RTI::AttributeNotPublished,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: requestAttributeOwnershipAssumption not supported in FED" << endl;
+}
+
+
+void SimFederateAmbassador::requestAttributeOwnershipRelease (
+        RTI::ObjectHandle        theObject,           // supplied C1
+  const RTI::AttributeHandleSet& candidateAttributes, // supplied C4
+  const char                    *theTag)              // supplied C4
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::AttributeNotOwned,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: requestAttributeOwnershipRelease not supported in FED" << endl;
+}
+
+void SimFederateAmbassador::confirmAttributeOwnershipAcquisitionCancellation (
+        RTI::ObjectHandle        theObject,         // supplied C1
+  const RTI::AttributeHandleSet& theAttributes) // supplied C4
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::AttributeAlreadyOwned,
+  RTI::AttributeAcquisitionWasNotCanceled,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: confirmAttributeOwnershipAcquisitionCancellation not"
+        << " supported in FED" << endl;
+}
+
+void SimFederateAmbassador::informAttributeOwnership (
+  RTI::ObjectHandle    theObject,    // supplied C1
+  RTI::AttributeHandle theAttribute, // supplied C1
+  RTI::FederateHandle  theOwner)     // supplied C1
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: informAttributeOwnership not supported in FED" << endl;
+}
+
+ void SimFederateAmbassador::attributeIsNotOwned (
+  RTI::ObjectHandle    theObject,    // supplied C1
+  RTI::AttributeHandle theAttribute) // supplied C1
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: attributeIsNotOwned not supported in FED" << endl;
+}
+
+void SimFederateAmbassador::attributeOwnedByRTI (
+  RTI::ObjectHandle    theObject,    // supplied C1
+  RTI::AttributeHandle theAttribute) // supplied C1
+throw (
+  RTI::ObjectNotKnown,
+  RTI::AttributeNotKnown,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: attributeOwnedByRTI not supported in FED" << endl;
+}
+
+//////////////////////////////
+// Time Management Services //
+//////////////////////////////
+
+
+void SimFederateAmbassador::requestRetraction (
+  RTI::EventRetractionHandle theHandle) // supplied C1
+throw (
+  RTI::EventNotKnown,
+  RTI::FederateInternalError)
+{
+   cerr << "FED_HW: requestRetraction not supported in FED" << endl;
+}
+

@@ -1,0 +1,7 @@
+
+OUTPUT sim.mpg
+GOP_SIZE 30
+YUV_SIZE 400x400
+INPUT
+mysim*.xwd [1-30]
+END_INPUT

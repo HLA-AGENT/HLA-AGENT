@@ -1,0 +1,195 @@
+;;; Panel variables
+vars predator_create_panel_fields,
+     predator_create_panel;
+
+;;; Slider variables
+vars s1,s2,s3,s4,s5,s6;
+
+[
+        ;;; Text panel
+        [TEXT {bg 'black'}
+            {fg 'brown'}
+            {gap 0}
+            {margin 5}
+            {align centre} :
+            'Add Predators']
+
+        ;;; Text panel
+        [TEXT {bg 'black'}
+            {fg 'brown'}
+            {gap 10}
+            {margin 5}
+            {align centre} :
+            'Start Energy']
+
+        ;;; Sliders for predator start energy
+        [SLIDERS
+            {fg 'black'}
+            {label energy}
+            {width 250}
+            {height 30}
+            {radius 8}
+            {barcol 'white'}
+            {blobcol 'blue'}
+            {framecol 'black'}
+            {framewidth 3}
+            {spacing 10}
+            {gap 0} :
+            [s1 {0 1000 200 10} round
+                [[{-5 13 '0'}] [{-20 13 '1000'}]]
+            ]]
+
+        ;;; Text panel
+        [TEXT {bg 'black'}
+            {fg 'brown'}
+            {gap 10}
+            {margin 5}
+            {align centre} :
+            'Energy Thresholds']
+
+        ;;; Sliders representing predator energy thresholds
+        [SLIDERS
+            {step 10}
+            {fg 'black'}
+            {label limits}
+            {width 250}
+            {height 30}
+            {radius 8}
+            {barcol 'white'}
+            {blobcol 'blue'}
+            {framecol 'black'}
+            {framewidth 3}
+            {spacing 10}
+            {gap 0} :
+            ;;; range
+            [s2 {0 1000 350} round
+                [[{-5 13 'FULL UP'}][]]
+            ]
+            [s3 {0 1000 150} round
+                [[{-5 13 'HUNGRY'}] []]
+            ]
+            [s4 {0 1000 50} round
+                [[{-5 13 'STARVING'}] []]
+            ]]
+
+        ;;; Text panel
+        [TEXT {bg 'black'}
+            {fg 'brown'}
+            {gap 10}
+            {margin 5}
+            {align centre} :
+            'Attacking Properties']
+
+        ;;; Sliders representing predator attack range and speed
+        [SLIDERS
+            {fg 'black'}
+            {label attack}
+            {width 250}
+            {height 30}
+            {radius 8}
+            {barcol 'white'}
+            {blobcol 'blue'}
+            {framecol 'black'}
+            {framewidth 3}
+            {spacing 10}
+            {gap 0} :
+            [s5 {0 1500 400 10} round
+                [[{-5 13 '0     RANGE'}]
+                [{-20 13 '1500'}]]
+            ]
+            [s6 {0 5 4} round
+            [[{-5 13 '0     SPEED'}] [{-10 13 '5'}]]
+            ]]
+
+        ;;; Button to return sliders to default values
+        [ACTIONS
+            {margin 5}
+            {offset 50}
+            {width 90}
+            {align centre}
+            {gap 0} :
+            [' DEFAULT' [DEFER POP11
+            predator_create_panel -> rc_current_window_object;
+            200 -> slider_value_of_name(predator_create_panel, "energy", 1);
+            350 -> slider_value_of_name(predator_create_panel, "limits", 1);
+            150 -> slider_value_of_name(predator_create_panel, "limits", 2);
+            50 -> slider_value_of_name(predator_create_panel, "limits", 3);
+            400 -> slider_value_of_name(predator_create_panel, "attack", 1);
+            4 -> slider_value_of_name(predator_create_panel, "attack", 2);
+            ]]]
+
+        ;;; Text panel
+        [TEXT {bg 'black'}
+            {fg 'brown'}
+            {gap 0}
+            {margin 5}
+            {align centre} :
+            'Add Number']
+
+        ;;; Field for entering the number of predators to add
+        [NUMBERIN
+            {label number_of_preds}
+            {align centre}
+            {gap 0}
+            {margin 10}
+            {offset 10}
+            {width 90}
+            {height 10}
+            {font '10x20'}
+            {bg 'blue'}:
+            1]
+
+        ;;; Buttons to add predators
+        [ACTIONS
+            {margin 15}
+            {offset 50}
+            {width 90}
+            {align centre}
+            {gap 0} :
+            [' MANUAL' [DEFER POP11
+            if world_create = false then return() endif;
+            add_predators(
+            rc_field_item_of_name(predator_create_panel,"number_of_preds",1),1,
+            slider_value_of_name(predator_create_panel, "energy", 1),
+            slider_value_of_name(predator_create_panel, "limits", 1),
+            slider_value_of_name(predator_create_panel, "limits", 2),
+            slider_value_of_name(predator_create_panel, "limits", 3),
+            slider_value_of_name(predator_create_panel, "attack", 1),
+            slider_value_of_name(predator_create_panel, "attack", 2));
+
+            ]]
+            [' RANDOM' [DEFER POP11
+            if world_create = false then return() endif;
+            add_predators(
+            rc_field_item_of_name(predator_create_panel,"number_of_preds",1),2,
+            slider_value_of_name(predator_create_panel, "energy", 1),
+            slider_value_of_name(predator_create_panel, "limits", 1),
+            slider_value_of_name(predator_create_panel, "limits", 2),
+            slider_value_of_name(predator_create_panel, "limits", 3),
+            slider_value_of_name(predator_create_panel, "attack", 1),
+            slider_value_of_name(predator_create_panel, "attack", 2));
+
+            ]]
+            ]
+
+        ;;; Button to close panel
+        [ACTIONS
+            {bg 'black'}
+            {margin 10}
+            {offset 50}
+            {width 90}
+            {align centre}
+            {gap 0} :
+            ['   CLOSE'[POP11 delete(predator_create_panel,panel_list)
+                                            -> panel_list;
+                              rc_kill_menu(); 0 -> pred_flag;]]
+        ]
+
+    ]  -> predator_create_panel_fields;
+/*
+rc_kill_window_object(rc_current_window_object);
+rc_control_panel(100,50,predator_create_panel_fields,'STARTUP PANEL')
+                -> predator_create_panel;
+slider_value_of_name(predator_create_panel, "energy", 1)=>
+sysgarbage();
+*/

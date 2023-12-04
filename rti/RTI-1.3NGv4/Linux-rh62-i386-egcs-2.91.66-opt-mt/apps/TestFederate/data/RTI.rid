@@ -1,0 +1,947 @@
+
+;; RTI Next Generation RID (Run-Time Initialization Data) File
+;; ===========================================================
+;; This file contains configuration parameters that control the operation of the
+;; RTI software.  All parameters have a default setting that is used in the
+;; event that a parameter value is not specified in the RID file or a RID file
+;; is not specified.
+;;
+;; File Location
+;; =============
+;; The RTI-NG software looks for the environment variable, RTI_RID_FILE, which
+;; defines the name and location of the RID file to be used by the application.
+;; The file location may be absolute or relative using the appropriate file
+;; naming convention for the particular operating system.  The file name is not
+;; required to have a special name or prefix, it only needs to be readable by
+;; the application and provide the correct syntax.
+;;
+;; If the environment variable is not set, the RTI will attempt to open a file
+;; named "RTI.rid" in the directory from which the application was launched.
+;;
+;; File Format
+;; ===========
+;; The format used for the RID file has only several rules relative to valid
+;; parsing.  The first item is that any text to the right of the comment token,
+;; (two semi-colons, ";;"), is ignored by the parser.  The next rule is that the
+;; left and right parentheses are used for scoping and must always be used in
+;; matching pairs.
+;;
+;; Within a pair of parentheses there can be the scope name or a parameter name
+;; and value pair.  The scope name is used to organize parameters that are
+;; conceptually related and ensure uniqueness in case a parameter name is used
+;; multiple times within different scopes.  If a parameter name is not unique
+;; only the last value will be used for the configuration control.  The
+;; parameter name is case insensitive and the value is parsed as a character
+;; string and subsequently interpreted according to the particular parameter
+;; type (e.g., integer, floating point, string).
+;;
+;; Parameter Scoping
+;; =================
+;; Each RID parameter is identified by a scope name in which the scoping is
+;; broken into three major categories according to the granularity of the
+;; internal RTI components.  The RTI-NG instantiates components when an RTI
+;; process is initially started (the first create or join), when a federation
+;; comes into existence within the process (first create or join of a new
+;; federation), and when a particular federate joins a federation.  These scope
+;; names are defined below.
+;;
+;;  ProcessSection    - process level component parameters
+;;  FederationSection - federation level component parameters
+;;  FederateSection   - federate level component parameters
+;;
+;; It is possible that a RID file used by a particular application will need to
+;; support multiple federations and federates within a single process using
+;; different RID parameter values for each federation or federate.  This RID
+;; structure can support this situation by creating a scope within the
+;; federation or federate section with the scope name the same as the name of
+;; the federation or name of the federate, respectively.
+;;
+;; As an example, assume that an application needs to support two different
+;; federations named FederationA and FederationB.  The RID parameter for the
+;; multicast base address for FederationA needs to be different from
+;; FederationB.  An example RID is shown below where the BaseAddress used for
+;; FederationB is "224.100.0.1" and for any other federations the value is
+;; "224.2.0.1".
+;;
+;;  (FederationSection
+;;     ...
+;;     (BaseAddress 224.2.0.1)
+;;     ...
+;;     (FederationB
+;;        ...
+;;        (BaseAddress 224.100.0.1)       
+;;        ...
+;;     )
+;;  )
+;;
+;; Parameter Definition
+;; ====================
+;; Each parameter contained in the RID file provides a description of the effect
+;; that the parameter value has on the operation of the RTI.  The valid
+;; parameter values are defined and the default value is specified within this
+;; file.  As previously mentioned, if the parameter and value is not specified
+;; within the RID file the default value will be used by the RTI.
+
+(RTI
+ ;; The RTI scope serves as a namespace for the RID user parameters.  No
+ ;; parameter entries should be made at this level.
+ 
+ (ProcessSection
+  ;; Entries in this section apply to the process level components.
+
+  (RtiExecutive
+   ;; The RTI Executive is a logically centralized process that is used as a
+   ;; network wide resource manager to handle such items as the uniqueness of
+   ;; federation names.  It is logically centralized since redundant processes
+   ;; can be used for fault tolerance (although this feature is currently not
+   ;; supported).  The parameters associated with the RTI Executive control
+   ;; how the process is found on the network.
+
+   ;; PARAMETER: ProcessSection.RtiExecutive.RtiExecutiveEndpoint
+   ;; DESCRIPTION: The RTI Executive endpoint defines the network address and
+   ;; port number used by the RTI Executive process (and hence the RTI Naming 
+   ;; Service).  The network address can be a hostname or an IP address.  The 
+   ;; endpoint is only necessary when the multicast discovery mechanism is not 
+   ;; used and the endpoint must match the value provided when the RTI Executive 
+   ;; process is started.
+   ;; RANGE: A valid hostname or IP address followed by a colon and then the
+   ;; port number.
+   ;; DEFAULT VALUE: None, will use multicast discovery mechanism.
+   ;;
+   ;;;;   (RtiExecutiveEndpoint hostname:port)
+
+   ;; PARAMETER: ProcessSection.RtiExecutive.
+   ;;            RtiExecutiveMulticastDiscoveryEndpoint
+   ;; DESCRIPTION: The RTI Executive discovery parameter defines the multicast
+   ;; address and port number used for the multicast discovery protocol to find
+   ;; the RTI Naming Service which is located in the RTI Executive process
+   ;; The naming service will then enable the application to locate distributed 
+   ;; RTI components (e.g., RTI Executive).
+   ;; RANGE: A valid multicast IP address (or hostname) followed by a colon and
+   ;; then the port number.
+   ;; DEFAULT VALUE: 224.9.9.2:22605
+   ;;
+   ;;;;   (RtiExecutiveMulticastDiscoveryEndpoint 224.9.9.2:22605)
+
+   ;; PARAMETER: ProcessSection.RtiExecutive.NumberOfAttemptsToFindRtiExecutive
+   ;; DESCRIPTION: The NumberAttemptsToFindRtiExecutive parameter is used to
+   ;; control how many attempts the application should use to locate the RTI
+   ;; Naming Service using the multicast discovery mechanism.
+   ;; RANGE: An integer value greater than zero.
+   ;; DEFAULT VALUE: 10
+   ;;
+   ;;;;   (NumberOfAttemptsToFindRtiExecutive 10)
+
+   ;; PARAMETER: ProcessSection.RtiExecutive.TimeToWaitAfterEachAttemptInSeconds
+   ;; DESCRIPTION: The TimeToWaitAfterEachAttemptInSeconds parameter is used to
+   ;; control how long the application should wait between attempts to find the
+   ;; RTI Executive using the multicast discovery mechanism.
+   ;; RANGE: A floating point value greater than zero.
+   ;; DEFAULT VALUE: 2.0
+   ;;
+   ;;;;   (TimeToWaitAfterEachAttemptInSeconds 2.0)
+   );; End of ProcessSection.RtiExecutive
+
+  (Networking
+   ;; The Networking section is used to define the communication configuration
+   ;; information associated with all of the RTI components within the
+   ;; application using this RID file.
+
+   ;; PARAMETER: ProcessSection.Networking.FederateEndpoint
+   ;; DESCRIPTION: The Networking endpoint defines the network address and port
+   ;; number used by the federate application process using this RID file.  The
+   ;; network address can be a hostname or an IP address.  The federate endpoint
+   ;; is used by other distributed RTI components to communicate with internal
+   ;; modules within this application.  Typically the federate endpoint does not
+   ;; need to be defined unless the computer has multiple network interfaces.
+   ;; If an environmental variable named RTI_FEDERATE_ENDPOINT is found, its 
+   ;; value will be used in favor of what is specified here.
+   ;; RANGE: A valid hostname or IP address followed by a colon and then the
+   ;; port number.
+   ;; DEFAULT VALUE: The default network card and the port.
+   ;;
+   ;;;;   (FederateEndpoint hostname:port)
+
+   (MulticastOptions
+    ;; The networking multicast options define the parameters that control the
+    ;; behavior of UDP communication within the RTI that is used for Best Effort
+    ;; transport.
+
+    ;; PARAMETER: ProcessSection.Networking.MulticastOptions.Interface
+    ;; DESCRIPTION: The Interface is used to specify which ethernet
+    ;; interface shall be used to send and receive multicast traffic. On
+    ;; most systems the possible interfaces can be listed with the netstat
+    ;; command).  If no interface is specified, the default is used.
+    ;; NOTE: This parameter does not effect multicast name service discovery.
+
+    ;; DEFAULT VALUE: None.
+    ;;
+    ;;;;   (Interface "eth0")
+
+    (Fragmentation
+     ;; The UDP communication protocol (used for Best Effort transport) does
+     ;; not fragment and reassemble data.  For messages larger than the UDP
+     ;; fragmentation size the RTI must fragment the message into smaller
+     ;; packets on the send side and then reassemble the packets on the
+     ;; receiver side.
+
+     ;; PARAMETER: ProcessSection.Networking.MulticastOptions.Fragmentation.FragmentSize
+     ;; DESCRIPTION: The FragmentSize is used to define the maximum number of
+     ;; bytes that can be used as the payload in a UDP packet.  Different 
+     ;; networks may be capable of supporting different UDP Maximum Transfer
+     ;; Unit (MTU) values.
+     ;; RANGE: An integer greater than zero representing the number of bytes.
+     ;; DEFAULT VALUE: 63000
+     ;;
+     ;;;;     (FragmentSize 63000)
+
+     ;; PARAMETER: ProcessSection.Networking.MulticastOptions.Fragmentation.ReassemblyTimerIntervalInSeconds
+     ;; DESCRIPTION: TheReassmeblyTimerIntervalInSeconds parameter is used to control how long
+     ;; control how long the receiver will wait to receive all of the fragments
+     ;; that make up a single message.  Since UDP is not a reliable communication
+     ;; protocol the fragments can be lost and the receiver needs to know how long
+     ;; to wait before discarding incomplete fragments.  For performance reasons
+     ;; the RTI does not create a timer for each fragment set, instead a common
+     ;; timer is used and each incomplete fragment set is incremented and removed
+     ;; after MaxTimeouts.
+     ;; RANGE: A floating point value greater than zero.
+     ;; DEFAULT VALUE: 1.0
+     ;;
+     ;;;;     (ReassemblyTimerIntervalInSeconds 1.0)
+
+     ;; PARAMETER: ProcessSection.Networking.MulticastOptions.Fragmentation.MaxTimeouts
+     ;; DESCRIPTION: The MaxTimeouts parameter is used to control how long the
+     ;; receiver will wait to receive all of the fragments that make up a
+     ;; single message.  Since UDP is not a reliable communication protocol the
+     ;; fragments can be lost and the receiver needs to know how long to wait
+     ;; before discarding incomplete fragments.  For performance reasons the RTI
+     ;; does not create a timer for each fragment set, instead a common timer is
+     ;; used and each incomplete fragment set is incremented and removed after
+     ;; MaxTimeouts.
+     ;; RANGE: An integer value greater than zero.
+     ;; DEFAULT VALUE: 3
+     ;;
+     ;;;;     (MaxTimeouts 3)
+     );; End of ProcessSection.Networking.MulticastOptions.Fragmentation
+    );; End of ProcessSection.Networking.MulticastOptions
+   );; End of ProcessSection.Networking
+
+  (ProcessModel
+   ;; The process model controls the mechanism used by the RTI to obtain
+   ;; processing cycles and support callbacks to the federate during the tick
+   ;; call.
+
+   ;; PARAMETER: ProcessSection.ProcessModel.StrategyToUse
+   ;; DESCRIPTION: There are currently two process model strategies that are
+   ;; supported by the RTI; (1) polling process model and (2) asynchronous I/O
+   ;; process model.  The polling process model uses a single thread of
+   ;; execution shared between the RTI and the federate.  Only when the federate
+   ;; calls tick is the RTI able to perform work.  This strategy can starve the
+   ;; RTI if tick is not called appropriately.  The asynchronous I/O process
+   ;; model uses an internal thread within the RTI to avoid starvation.  This
+   ;; thread will periodically wake up and determine if it can perform any
+   ;; internal RTI work.  In the asynchronous I/O strategy the federate only
+   ;; needs to invoke tick when it is prepared to handle callbacks.
+   ;; RANGE: An enumeration value {Polling, AsynchronousIO}.
+   ;; DEFAULT VALUE: AsynchronousIO
+
+   ;;;;   (StrategyToUse AsynchronousIO)
+   ;;;;   (StrategyToUse Polling)
+
+
+   );; End of ProcessSection.ProcessModel
+
+  (Scheduler
+   ;; The Scheduler section contains parameters associated with the behavior of
+   ;; the tick service.
+
+
+   ;; PARAMETER: ProcessSection.Scheduler.SingleCallbackPerTick
+   ;; DESCRIPTION: When using the tick service without the minimum and maximum
+   ;; time arguments the RTI can be directed to return a single callback or
+   ;; provide all available callbacks.  Using this service with a setting of No
+   ;; indicates to the RTI that all available callbacks should be delivered to
+   ;; the federate in a single tick() call.
+   ;; RANGE: An enumeration value {Yes, No}.
+   ;; DEFAULT VALUE: No.
+   ;;
+   ;;;;   (SingleCallbackPerTick     No)
+
+   );; End of ProcessSection.Scheduler
+
+
+  );; End of ProcessSection
+
+ (FederationSection
+  ;; Entries in this section apply to the federation level components.
+
+  (FederationExecutive
+   ;; The FederationExecutive section contains parameters related to the
+   ;; federation executive process that is launched when a federation is
+   ;; created.
+
+   ;; PARAMETER: FederationSection.FederationExecutive.FederationExecutiveEndpoint
+   ;; DESCRIPTION: The Federation Executive endpoint defines the network address
+   ;; and port number used by the Federation Executive process.  The network
+   ;; address can be a hostname or an IP address.  Typically, the endpoint only
+   ;; needs to be defined when the Federation Executive needs to use the
+   ;; non-default network interface, or when the Federation Executive (i.e.,    
+   ;; fedex) is to run on a different host than the RTI Executive.
+   ;; RANGE: A valid hostname or IP address followed by a colon and then the
+   ;; port number.
+   ;; DEFAULT VALUE: Will use same default hostname on the host where the RTI
+   ;; Executive is running, with a system generated port number.
+   ;;
+   ;;;;  (FederationExecutiveEndpoint hostname:port)   
+
+   ;; PARAMETER: FederationSection.FederationExecutive.FilenameOfFederationExecutiveExecutable
+   ;; DESCRIPTION: This parameter defines the relative or absolute path to the
+   ;; Federation Executive executable (i.e., fedex).  The relative path is
+   ;; defined relative to the location of the RTI Executive.
+   ;; RANGE: A valid path to the fedex executable.
+   ;; DEFAULT VALUE: fedex
+   ;;
+   ;;;;   (FilenameOfFederationExecutiveExecutable fedex)
+
+   ;; PARAMETER: FederationSection.FederationExecutive.TimeToWaitBeforeCommunicatingWithFederationExecutiveInSeconds
+   ;; DESCRIPTION: This parameter is used to allow the federate application to
+   ;; wait a period of time before trying to connect to the Federation Executive
+   ;; process.  A small delay may be necessary when the Federation Executive is
+   ;; being created.
+   ;; RANGE: An integer greater than or equal to zero.
+   ;; DEFAULT VALUE: 3
+   ;;
+   ;;;;   (TimeToWaitBeforeCommunicatingWithFederationExecutiveInSeconds 3)
+
+   ;; PARAMETER: FederationSection.FederationExecutive.NumberOfAttemptsToFindFederationExecutive
+   ;; DESCRIPTION: The federate application may attempt to connect to the
+   ;; Federation Executive process multiple times.
+   ;; RANGE: An integer number greater than zero.
+   ;; DEFAULT VALUE: 10
+   ;;
+   ;;;;   (NumberOfAttemptsToFindFederationExecutive  10)
+
+   ;; PARAMETER: FederationSection.FederationExecutive.TimeToWaitAfterEachAttemptInSeconds
+   ;; DESCRIPTION: When the federate application fails to initially connect to
+   ;; the Federation Executive process it can wait a fixed period of time.
+   ;; RANGE: A floating point number greater than or equal to zero.
+   ;; DEFAULT VALUE: 2.0
+   ;;
+   ;;;;   (TimeToWaitAfterEachAttemptInSeconds  2.0)
+
+   ;; PARAMETER: FederationSection.FederationExecutive.FilenameToRedirectStdout
+   ;; DESCRIPTION: This parameter can be used to direct standard output to a
+   ;; file, rather than the default output device.
+   ;; RANGE: A valid filename.
+   ;; DEFAULT VALUE: None, will use the standard output device.
+   ;;
+   ;;;;  (FilenameToRedirectStdout fedex.stdout)
+
+   ;; PARAMETER: FederationSection.FederationExecutive.FilenameToRedirectStderr
+   ;; DESCRIPTION: This parameter can be used to direct standard error to a
+   ;; file, rather than the default error device.
+   ;; RANGE: A valid filename.
+   ;; DEFAULT VALUE: None, will use the standard error device.
+   ;;
+   ;;;;  (FilenameToRedirectStderr fedex.stderr)
+
+   ;; PARAMETER: FederationSection.FederationExecutive.DirectoryForSaveAndRestoreFiles
+   ;; DESCRIPTION: This parameter provides the pathname to the directory used
+   ;; when producing new saved files or processing existing saved files.
+   ;; RANGE: A valid directory pathname.
+   ;; DEFAULT_VALUE: .
+   ;;
+   ;;;;  (DirectoryForSaveAndRestoreFiles .)
+
+   ;; PARAMETER: FederationSection.FederationExecutive.IgnoreRidInconsistenciesOnRestore
+   ;; DESCRIPTION: This parameter specifies whether the federation should 
+   ;; allow a restore proceed if the RID file used during the save is
+   ;; different then the RID file used prior to call to restore. 
+   ;; RANGE: Yes, No
+   ;; DEFAULT_VALUE: No
+   ;;
+   ;;;;  (IgnoreRidInconsistenciesOnRestore No)
+
+   );; End of FederationSection.FederationExecutive
+
+  ;; PARAMETER: FederationSection.TimeIntervalToCheckForUnresponsiveFederationInSeconds
+  ;; DESCRIPTION: The RTI Executive employs a simple heartbeat model as a means
+  ;; to clear the name of an unresponsive federation from the RTI Naming
+  ;; Service so that the name can be reused.  This parameter sets the time
+  ;; interval in seconds at which the RTI Executive checks to see whether it has
+  ;; heard from the Federation Executive.
+  ;; RANGE: A floating point value greater than zero.
+  ;; DEFAULT_VALUE: 60.0
+  ;;
+  ;;;;  (TimeIntervalToCheckForUnresponsiveFederationInSeconds 60.0)
+
+  ;; PARAMETER: FederationSection.TimeToWaitBeforeDeclaringFederationDeadInSeconds
+  ;; DESCRIPTION: The RTI Executive employs a simple heartbeat model as a means
+  ;; to clear the name of an unresponsive federation from the RTI Naming Service
+  ;; so that the name can be reused.  This parameter sets the time to wait in
+  ;; seconds before the RTI Executive removes the name of a federation from
+  ;; which it has not received a ping reply.
+  ;; RANGE: A floating point value greater than zero.
+  ;; DEFAULT_VALUE: 90.0
+  ;;
+  ;;;;  (TimeToWaitBeforeDeclaringFederationDeadInSeconds 90.0)
+
+  (FederationInterconnect
+   ;; The FederationInterconnect section contains parameters associated with the
+   ;; configuration of reliable transport configuration channels.
+
+   ;; PARAMETER: FederationSection.FederationInterconnect.StrategyToUse
+   ;; DESCRIPTION: The interconnection of RTI nodes for reliable traffic can use
+   ;; either a CollocatedEventChannel or a CentralizedEventChannel strategy.  The
+   ;; CollocatedEventChannel strategy allows each RTI node (i.e., each federate
+   ;; application) to contain a "TCP exploder" that is connected to every other
+   ;; node.  The CentralizedEventChannel strategy uses a single node to receive
+   ;; all of the federation reliable traffic and transmit this data to the
+   ;; interested receivers.  The CollocatedEventChannel adds some processing
+   ;; requirements to each node to perform the TCP writes, but it avoids latency
+   ;; when going through a centralized node which has the processing burden of
+   ;; the entire federation.
+   ;; RANGE: An enumeration value {CollocatedEventChannels,
+   ;; CentralizedEventChannel}
+   ;; DEFAULT VALUE: CollocatedEventChannels
+   ;;
+   ;;;;   (StrategyToUse CollocatedEventChannels)
+
+   ;; PARAMETER: FederationSection.FederationInterconnect.PingIntervalInSeconds
+   ;; DESCRIPTION: Controls the rate at which the interconnect sends ping
+   ;; requests to each node.  This is used to determine the "wellness" of the
+   ;; nodes.
+   ;; RANGE: A real number greater than 1.0 or Off
+   ;; DEFAULT VALUE: 5.0
+   ;; Values 
+   ;;
+   ;;;;   (PingIntervalInSeconds 5.0)
+
+   
+  ) ;; End of FederationSection.FederationInterconnect
+
+  (Networking
+   ;; This section contains parameters related to networking information related
+   ;; to the federation components.
+
+   (BundlingOptions
+    ;; Federation data can be bundled by the sender in order to improve
+    ;; throughput, at the expense of latency.
+
+    (UDP
+     ;; RTI best effort transport uses User Datagram Protocol (UDP).
+
+     ;; PARAMETER: FederationSection.Networking.BundlingOptions.UDP.MaxTimeBeforeSendInSeconds
+     ;; DESCRIPTION: This parameter is the maximum amount of time that the RTI
+     ;; will wait before the RTI flushes the data.  If set to 0, bundling will
+     ;; be disabled.
+     ;; RANGE: A floating point value greater than or equal to zero.
+     ;; DEFAULT VALUE: 0.005
+     ;;
+     ;;;;     (MaxTimeBeforeSendInSeconds 0.005)
+
+     ;; PARAMETER: FederationSection.Networking.BundlingOptions.UDP.MaxBytesBeforeSend
+     ;; DESCRIPTION: This parameter is the maximum number of bytes that will be
+     ;; bundled before the RTI flushes the data.
+     ;; RANGE: An integer value greater than or equal to zero.
+     ;; DEFAULT VALUE: 63000
+     ;;
+     ;;;;     (MaxBytesBeforeSend    63000)
+
+     );; End of FederationSection.Networking.BundlingOptions.UDP
+
+    (TCP
+     ;; RTI Reliable transport uses Transfer Control Protocol (TCP).
+
+     ;; PARAMETER: FederationSection.Networking.BundlingOptions.TCP.MaxTimeBeforeSendInSeconds
+     ;; DESCRIPTION: This parameter is the maximum amount of time that the RTI
+     ;; will wait before the RTI flushes the data.  If set to 0, bundling will
+     ;; be disabled.
+     ;; RANGE: A floating point value greater than or equal to zero.
+     ;; DEFAULT VALUE: 0.005
+     ;;
+     ;;;;     (MaxTimeBeforeSendInSeconds 0.005)
+
+     ;; PARAMETER: FederationSection.Networking.BundlingOptions.TCP.MaxBytesBeforeSend
+     ;; DESCRIPTION: This parameter is the maximum number of bytes that will be
+     ;; bundled before the RTI flushes the data.
+     ;; RANGE: An integer value greater than or equal to zero.
+     ;; DEFAULT VALUE: 63000
+     ;;
+     ;;;;     (MaxBytesBeforeSend    63000)
+
+     );; End of FederationSection.Networking.BundlingOptions.TCP
+
+    );; End of FederationSection.Networking.BundlingOptions
+
+   (MulticastOptions
+    ;; The networking multicast options define the parameters that control the
+    ;; behavior of UDP communication within the RTI that is used for Best Effort
+    ;; transport.
+
+    ;; PARAMETER: FederationSection.Networking.MulticastOptions.PortNumber
+    ;; DESCRIPTION: The port number of the socket used for sending multicast
+    ;; traffic in support of Best Effort transport.
+    ;; RANGE: An integer value representing a valid port number, or
+    ;; the string RTI-selected to have the RTI select an available port
+    ;; DEFAULT VALUE: RTI-selected
+    ;;
+    ;;;;    (PortNumber 2000)
+
+    ;; PARAMETER: FederationSection.Networking.MulticastOptions.BaseAddress
+    ;; DESCRIPTION: The base network address (IP four decimal address or
+    ;; hostname) for sending multicast traffic.  The Best Effort traffic will be
+    ;; segmented into different multicast addresses when using the Data
+    ;; Distribution Management (DDM) services.  The maximum number of multicast
+    ;; addresses used by the RTI will be defined by the available addresses
+    ;; between the MaxAddress and the BaseAddress, although the actual number
+    ;; used may be far less (see DDM parameters).
+    ;; RANGE: Any valid IP multicast address, e.g., from 224.0.0.3 to 
+    ;; 239.255.255.255
+    ;; DEFAULT VALUE: 224.1.0.0
+    ;;
+    ;;;;    (BaseAddress 224.1.0.0)
+
+    ;; PARAMETER: FederationSection.Networking.MulticastOptions.MaxAddress
+    ;; DESCRIPTION: The maximum network address (IP four decimal address or
+    ;; hostname) for sending multicast traffic.  The Best Effort traffic will be
+    ;; segmented into different multicast addresses when using the Distribution
+    ;; Management (DDM) services.  The maximum number of multicast addresses
+    ;; used by the RTI will be defined by the available addresses between the
+    ;; MaxAddress and the BaseAddress, although the actual number used may be
+    ;; far less (see DDM parameters).
+    ;; RANGE: Any valid IP multicast address greater than or equal to the base
+    ;; address.
+    ;; DEFAULT VALUE: 239.255.255.255
+    ;;
+    ;;;;    (MaxAddress 239.255.255.255)
+
+    ;; PARAMETER: FederationSection.Networking.MulticastOptions.TimeToLive
+    ;; DESCRIPTION: To prevent infinite routing loops, UDP multicast packets are
+    ;; marked with a counter that is decremented each time a router sees the
+    ;; packet.  This counter is called TTL (Time To Live).  Routers will not
+    ;; pass any packets with a TTL less than 2.  Consequently, to pass UDP
+    ;; multicast between LAN's, not only must the routers be properly 
+    ;; configured, but the TTL must be at least 2 as well.
+    ;; RANGE: An integer from 0 to 255
+    ;; DEFAULT VALUE: 1
+    ;;
+    ;;;;    (TimeToLive 1)
+    );; End of FederationSection.Networking.MulticastOptions
+
+   );; End of FederationSection.Networking
+
+  (Advisories
+   ;; The advisories section contains parameters related to the RTI advisory
+   ;; mechanisms.  The scope advisories that inform the federate when certain
+   ;; attributes owned by other federates are in or out of scope with respect to
+   ;; the federate's subscriptions.  The relevance advisories inform the
+   ;; publishing federate whether other federates in the federation are
+   ;; interested in particular object or interaction classes and particular
+   ;; object attribute instances.
+
+   ;; PARAMETER: FederationSection.Advisories.ClassRelevanceAdvisorySwitchDefault
+   ;; DESCRIPTION: This parameter controls the switch to define if the object
+   ;; class relevance advisory mechanism is enabled when the federate begins.
+   ;; The class relevance advisories will inform the federate if there exists
+   ;; any other federate within the federation that is subscribed to a
+   ;; particular class.  The relevance advisories could be beneficial in large
+   ;; scale federations, although there may be significant performance cost in
+   ;; calculating these advisories.
+   ;; RANGE: An enumeration value {Enabled, Disabled}
+   ;; DEFAULT VALUE: Enabled
+   ;;
+   (ClassRelevanceAdvisorySwitchDefault Enabled)
+
+   ;; PARAMETER: FederationSection.Advisories.AttributeRelevanceAdvisorySwitchDefault
+   ;; DESCRIPTION: This parameter controls the switch to define if the object
+   ;; attribute relevance advisory mechanism is enabled when the federate
+   ;; begins.  The attribute relevance advisories will inform the federate if
+   ;; there exists any other federate within the federation that is subscribed
+   ;; such that they would receive updates from a particular attribute instance.
+   ;; The relevance advisories could be beneficial in large scale federations,
+   ;; although there may be significant performance cost in calculating these
+   ;; advisories.
+   ;; RANGE: An enumeration value {Enabled, Disabled}
+   ;; DEFAULT VALUE: Disabled
+   ;;
+   (AttributeRelevanceAdvisorySwitchDefault Enabled)
+
+   ;; PARAMETER: FederationSection.Advisories.AttributeScopeAdvisorySwitchDefault
+   ;; DESCRIPTION: This parameter controls the switch to define if the object
+   ;; attribute scope advisory mechanism is enabled when the federate begins.
+   ;; The attribute scope advisories will inform the federate if a particular
+   ;; attribute instance being updated from another federate matches the
+   ;; federates subscriptions.  If the attribute is in scope the federate will
+   ;; receive any updates, and if the attribute is out of scope any updates will
+   ;; not be reflected.
+   ;; RANGE: An enumeration value {Enabled, Disabled}
+   ;; DEFAULT VALUE: Disabled
+   ;;
+   (AttributeScopeAdvisorySwitchDefault Enabled)
+
+   ;; PARAMETER: FederationSection.Advisories.InteractionRelevanceAdvisorySwitchDefault
+   ;; DESCRIPTION: This parameter controls the switch to define if the
+   ;; interaction relevance advisory mechanism is enabled when the federate
+   ;; begins.  The interaction relevance advisories will inform the federate if
+   ;; there exists any other federate within the federation that is subscribed
+   ;; to a particular interaction class.  The relevance advisories could be
+   ;; beneficial in large scale federations, although there may be significant
+   ;; performance cost in calculating these advisories.
+   ;; RANGE: An enumeration value {Enabled, Disabled}
+   ;; DEFAULT VALUE: Enabled
+   ;;
+   (InteractionRelevanceAdvisorySwitchDefault Enabled)
+
+   ;; PARAMETER: FederationSection.Advisories.RelevanceAdvisoryInteractionClassHeartbeatInSeconds
+   ;; DESCRIPTION: The relevance advisory interaction class heartbeat parameter 
+   ;; controls how often each federate will broadcast interaction subscription
+   ;; information to the other RTI nodes in order to calculate if there is a
+   ;; federate that has an interest in a particular interaction class.  The
+   ;; heartbeat mechanism is used as a more scalable approach than requiring
+   ;; each federate to buffer global subscription knowledge for the entire
+   ;; federation.  If interaction relevance advisories are not used within the
+   ;; federation then the value of Off can be used.  If the interaction 
+   ;; relevance advisories are being used the heartbeat rate should be the
+   ;; maximum delay in receiving the interaction advisory that is tolerable.
+   ;; RANGE: A floating point value greater than zero, or an enumeration value
+   ;; of Off.
+   ;; DEFAULT VALUE: 10.0
+   ;;
+   ;;;;   (RelevanceAdvisoryInteractionClassHeartbeatInSeconds 10.0)
+
+   ;; PARAMETER: FederationSection.Advisories.RelevanceAdvisoryInteractionClassTimeoutInSeconds
+   ;; DESCRIPTION: The relevance advisory interaction timeout parameter defines
+   ;; how long a federate will wait to receive a relevance interaction
+   ;; subscription heartbeat that matches a particular interaction class.
+   ;; A match is necessary to inform the federate that there is
+   ;; interest.  The heartbeat mechanism is used as a more scalable approach
+   ;; than requiring each federate to buffer global subscription knowledge for
+   ;; the entire federation.  If interaction relevance advisories are not used
+   ;; within the federation then the value of Off can be used.
+   ;; If the relevance advisories are being used the timeout rate should be
+   ;; at least twice that of the heartbeat rate.
+   ;; RANGE: A floating point value greater than zero, or an enumeration value
+   ;; of Off.
+   ;; DEFAULT VALUE: 30.0
+   ;;
+   ;;;;   (RelevanceAdvisoryInteractionClassTimeoutInSeconds 30.0)
+
+   ;; PARAMETER: FederationSection.Advisories.RelevanceAdvisoryObjectClassHeartbeatInSeconds
+   ;; DESCRIPTION: The relevance advisory object class heartbeat parameter
+   ;; controls how often each federate will broadcast object class subscription
+   ;; information to the other RTI nodes in order to calculate if there is a
+   ;; federate that has an interest in a particular object class.  The
+   ;; heartbeat mechanism is used as a more scalable approach than requiring
+   ;; each federate to buffer global subscription knowledge for the entire
+   ;; federation.  If object class relevance advisories are not used within the
+   ;; federation then the value of Off can be used.  If the object class
+   ;; relevance advisories are being used the heartbeat rate should be the
+   ;; maximum delay in receiving the advisory that is tolerable.
+   ;; RANGE: A floating point value greater than zero, or an enumeration value
+   ;; of Off.
+   ;; DEFAULT VALUE: 10.0
+   ;;
+   ;;;;   (RelevanceAdvisoryObjectClassHeartbeatInSeconds 10.0)
+
+   ;; PARAMETER: FederationSection.Advisories.RelevanceAdvisoryObjectClassTimeoutInSeconds
+   ;; DESCRIPTION: The relevance advisory object class timeout parameter
+   ;; defines how long a federate will wait to receive a relevance object
+   ;; class subscription heartbeat that matches a particular object class.
+   ;; A match is necessary to inform the federate that there is
+   ;; interest.  The heartbeat mechanism is used as a more scalable approach
+   ;; than requiring each federate to buffer global subscription knowledge for
+   ;; the entire federation.  If object class relevance advisories are not used
+   ;; within the federation then the value of Off can be used.
+   ;; If the relevance advisories are being used the timeout rate should be at
+   ;; least twice that of the heartbeat rate.
+   ;; RANGE: A floating point value greater than zero, or an enumeration value
+   ;; of Off.
+   ;; DEFAULT VALUE: 30.0
+   ;;
+   ;;;;   (RelevanceAdvisoryObjectClassTimeoutInSeconds 30.0)
+
+   ;; PARAMETER: FederationSection.Advisories.RelevanceAdvisoryAttributeInstanceHeartbeatInSeconds
+   ;; DESCRIPTION: The relevance advisory attribute instance heartbeat parameter
+   ;; controls how often each federate will broadcast attribute instance
+   ;; subscription information to the other RTI nodes in order to calculate if
+   ;; there is a federate that has an interest in a particular attribute
+   ;; instance.  The heartbeat mechanism is used as a more scalable approach
+   ;; than requiring each federate to buffer global subscription knowledge for
+   ;; the entire federation.  If attribute instance relevance advisories
+   ;; are not used within the federation then the value of Off can be used.
+   ;; If the attribute instance relevance advisories are being used the
+   ;; heartbeat rate should be the maximum delay in receiving the advisory that
+   ;; is tolerable.
+   ;; RANGE: A floating point value greater than zero, or an enumeration value
+   ;; of Off.
+   ;; DEFAULT VALUE: 10.0
+   ;;
+   ;;;;   (RelevanceAdvisoryAttributeInstanceHeartbeatInSeconds 10.0)
+
+   ;; PARAMETER: FederationSection.Advisories.RelevanceAdvisoryAttributeInstanceTimeoutInSeconds
+   ;; DESCRIPTION: The relevance advisory attribute instance timeout parameter
+   ;; defines how long a federate will wait to receive a relevance attribute
+   ;; instance subscription heartbeat that matches a particular attribute
+   ;; instance. A match is necessary to inform the federate that there is
+   ;; interest.  The heartbeat mechanism is used as a more scalable approach
+   ;; than requiring each federate to buffer global subscription knowledge for
+   ;; the entire federation.  If attribute instance relevance advisories
+   ;; are not used within the federation then the value of Off can be used.
+   ;; If the relevance advisories are being used the timeout rate should be at
+   ;; least twice that of the heartbeat rate.
+   ;; RANGE: A floating point value greater than zero, or an enumeration value
+   ;; of Off.
+   ;; DEFAULT VALUE: 30.0
+   ;;
+   ;;;;   (RelevanceAdvisoryAttributeInstanceTimeoutInSeconds 30.0)
+
+   ;; PARAMETER: FederationSection.Advisories.ProvideAttributeValueUpdateDelayTimeInSeconds
+   ;; DESCRIPTION: The provide attribute value update delay time parameter
+   ;; defines the amount of time that a federate will "hold onto" a
+   ;; object-instance-level provideAttributeValueUpdate command before
+   ;; delivering it to the federate ambassador.  While the command is being
+   ;; held, if identical provideAttributeValueUpdate commands are generated,
+   ;; then only one is eventually delivered.  This behavior potentially
+   ;; reduces the number of identical provideAttributeValueUpdate commands a 
+   ;; federate must process in a given time period.  Furthermore, the reduced
+   ;; network traffic due fewer resulting updateAttributeValue commands
+   ;; can also greatly improve performance.
+   ;; RANGE: A non-negative floating point value.
+   ;; DEFAULT VALUE: 0.0
+   ;;
+   ;;;;   (ProvideAttributeValueUpdateDelayTimeInSeconds 0.0)
+
+   );; End of FederationSection.Advisories
+
+  (TimeManagement
+   ;; This section contains parameters related to the RTI Time Management
+   ;; services.
+
+   ;; PARAMETER: FederationSection.TimeManagement.TimeToWaitForLbtsCalculationsBeforeErrorInSeconds
+   ;; DESCRIPTION: This parameter is used to control how long the LBTS (Lower
+   ;; Bound on Time Stamp) calculation will stall before reporting an error.
+   ;; The event synchronization algorithm requires coordination with all of the
+   ;; federates when any federate becomes time regulating.  If in the process of
+   ;; calculating the LBTS a federate becomes unresponsive the calculation will
+   ;; stall and report an error after waiting the amount of time defined by this
+   ;; parameter.
+   ;; RANGE: A floating point value greater than zero. 
+   ;; DEFAULT VALUE: 10.0
+   ;;
+   ;;;;    (TimeToWaitForLbtsCalculationsBeforeErrorInSeconds 10.0)
+
+   ;; PARAMETER: FederationSection.TimeManagement.
+   ;;            TimeToWaitInBetweenLbtsCalculationsInSeconds
+   ;; DESCRIPTION: This parameter controls how long the synchronization process
+   ;; will wait after completing an LBTS computation before initiating another
+   ;; calculation.  A small value will allow the federation to advance logical
+   ;; time more quickly, but will also increase the rate of computations and
+   ;; communications.  The value should be based on the maximum rate (advances
+   ;; per seconds of wallclock time) at which the federation would ever be
+   ;; required to advance time.
+   ;; RANGE: A floating point value greater than or equal to zero.
+   ;; DEFAULT VALUE: 0.050
+   ;;
+   ;;;;    (TimeToWaitInBetweenLbtsCalculationsInSeconds 0.050)
+
+   );; End of FederationSection.TimeManagement
+
+  (DataDistribution
+   ;; This section contains parameters related to the RTI Data Distribution
+   ;; Management services.
+
+   ;; PARAMETER: FederationSection.DataDistribution.StrategyToUse
+   ;; DESCRIPTION: The routing of federation data using the RTI Data
+   ;; Distribution Management (DDM) services can be implemented using different
+   ;; techniques.  Each technique will have different characteristics that may
+   ;; effect the performance of DDM depending on the particular operating
+   ;; conditions of the federation.  The initial data routing strategies offered
+   ;; are:
+   ;;   Simple - Uses two data channels, one for Best Effort and one for
+   ;; Reliable transport.  This scheme provides no segmentation of data based on
+   ;; DDM usage and is useful for testing purposes.
+   ;;   StaticSpacePartitioned - Uses two channels per routing space, one for Best
+   ;; Effort and one for Reliable transport.  This scheme segments data
+   ;; according to the routing space that a particular class or attribute is
+   ;; assigned to in the RID file.  This mechanism provides a simplification to
+   ;; the grid partitioned scheme in which segmentation is only required based on
+   ;; the routing space, not the particular update and subscription regions
+   ;; within a space.
+   ;;   StaticGridPartitioned - Uses two channels (Best Effort and Reliable) for
+   ;; each hypercube formed by partitioning each dimension of a routing space in a
+   ;; grid like fashion.  The number of partitions in each dimension is user
+   ;; defined.  This scheme offers the federation control of how to statically
+   ;; segment federation traffic for their particular exercise.
+   ;; RANGE: An enumeration value {Simple, StaticSpacePartitioned, 
+   ;; StaticGridPartioned}.
+   ;; DEFAULT VALUE: StaticGridPartitioned
+   ;;
+   ;;;;    (StrategyToUse StaticGridPartitioned)
+
+   (Options
+    ;; This section contains parameters associated with the DDM implementations.
+
+    ;; PARAMETER: FederationSection.DataDistribution.BestEffortChannelType
+    ;; DESCRIPTION: This parameter allows for the specification of the
+    ;; particular channel type for all Best Effort traffic.  Currently a UDP
+    ;; multicast and TCP channel type are supported.  Additional channel types
+    ;; may be available in future releases.
+    ;; RANGE: An enumeration value {UDPmulticast, TCP}.
+    ;; DEFAULT_VALUE: UDPmulticast
+    ;;
+    ;;;;    (BestEffortChannelType UDPmulticast)
+
+    ;; PARAMETER: FederationSection.DataDistribution.ReliableChannelType
+    ;; DESCRIPTION: This parameter allows for the specification of the
+    ;; particular channel type for all Reliable traffic.  Currently a UDP
+    ;; multicast and TCP channel type are supported.  Additional channel types
+    ;; may be available in future releases.
+    ;; RANGE: An enumeration value {UDPmulticast, TCP}.
+    ;; DEFAULT_VALUE: TCP
+    ;;
+    ;;;;    (ReliableChannelType TCP)
+
+    (StaticGridPartitionedStrategyOptions
+     ;; This section contains parameters related to the static grid strategy.
+
+     ;; PARAMETER: FederationSection.DataDistribution.StaticGridPartitionedStrategyOptions.MaxNumberOfDataChannelsToUse
+     ;; DESCRIPTION: This parameter is used to define the maximum number of data
+     ;; channels to be used by the segmentation of all routing spaces.  A
+     ;; larger number of channels may provide more effective segmentation of the
+     ;; federation data, but for Best Effort traffic using UDP the segmentation
+     ;; can be limited by the number of available multicast addresses (see
+     ;; MulticastOptions in the FederationSection).  If the maximum number of
+     ;; channels exceed the available multicast addresses the algorithm will
+     ;; reuse the addresses and therefore reducing segmentation efficiency.
+     ;; The TCP mechanism for Reliable traffic has a 2^32 limit on the number of
+     ;; channels due to the fact that a 32 bit quantity is used to address the
+     ;; data.
+     ;; RANGE: An integer value greater than zero.
+     ;; DEFAULT_VALUE: 64
+     ;;
+     ;;;;     (MaxNumberOfDataChannelsToUse 64)
+
+     ;; PARAMETER: FederationSection.DataDistribution.StaticGridPartitionedStrategyOptions.NumPartitionsPerDimension
+     ;; DESCRIPTION: This parameter is used to define the default number of
+     ;; partitions that are used for each dimension to segment the space.  A
+     ;; larger number of partitions will increase segmentation (provided there
+     ;; is not a limit with the number of channels to use or a limit in the
+     ;; number of multicast addresses for UDP).  Further refinement to the space
+     ;; partitioning can be accomplished by having different decimation for
+     ;; different dimensions in different spaces using the parameters in the
+     ;; SpaceOptions section.
+     ;; RANGE: An integer value greater than zero.
+     ;; DEFAULT_VALUE: 1
+     ;;
+     ;;;;     (NumPartitionsPerDimension 1)
+
+     (SpaceOptions
+      ;; The SpaceOptions Section enables the number of partitions on any given
+      ;; dimension within any space to override the default.  Note that to
+      ;; control these parameters they need to be defined based on the
+      ;; particular routing space names used in the FED (Federation Execution
+      ;; Data) file.  The examples below are shown for two spaces "SpaceA" and
+      ;; "SpaceB", but these names would have to be replaced for use within a
+      ;; particular federation.  The NumPartitions parameter is associated with a
+      ;; particular numbered dimension (e.g., dimension1, dimension2) and
+      ;; defines the decimation for that dimension in the appropriate routing
+      ;; space.
+
+      (SpaceA
+       (DimensionOptions
+        ;;;;       (dimension1 (NumPartions 2))
+        ;;;;       (dimension2 (NumPartions 3))
+        )
+       )
+      (SpaceB
+       (DimensionOptions
+        ;;;;     (dimension1 (NumPartions 5))
+	)
+       )
+      );; End of ...StaticGridPartitionedStrategyOptions.SpaceOptions
+     );; End of ...DataDistribution.StaticGridPartitionedStrategyOptions
+    );; End of ...DataDistribution.Options
+   );; End of FederationSection.DataDistribution
+
+  (MOM
+   ;; This section contains parameters related to MOM.
+
+   ;; PARAMETER: FederationSection.MOM.MomServiceAvailable
+   ;; DESCRIPTION: Although MOM services are very useful for federation
+   ;; monitoring and control there is an overhead associated with MOM.  This
+   ;; parameter allows a federation to turn off MOM services if they are not
+   ;; being used within the federation.
+   ;; RANGE: An enumeration value {Yes, No}.
+   ;; DEFAULT_VALUE: Yes
+   ;;
+   ;;;;   (MomServiceAvailable Yes)
+
+   ;; PARAMETER: FederationSection.MOM.MomTickingIntervalInSeconds
+   ;; DESCRIPTION: This parameter is to control how often MOM will obtain
+   ;; processing cycles to perform work.  It should be set at the maximum amount
+   ;; of time the federation can tolerate for waiting for MOM responses.
+   ;; RANGE: A floating point value greater than zero.
+   ;; DEFAULT_VALUE: 3.0
+   ;;
+   ;;;;   (MomTickingIntervalInSeconds 3.0)
+
+   ;; PARAMETER: FederationSection.MOM.ExceptionLoggingFilePrefix
+   ;; DESCRIPTION: This parameter specifies the file prefix for the exception
+   ;; log.  The file is written into the federate's current directory and has
+   ;; the form: <Prefix>_<fedName> where <fedName> is the federate identifier as
+   ;; specified in the call to joinFederationExecution
+   ;; RANGE: A valid file name.
+   ;; DEFAULT_VALUE: RtiMomExceptionLoggingFile
+   ;;
+   ;;;;   (ExceptionLoggingFilePrefix RtiMomExceptionLoggingFile)
+
+   ;; PARAMETER: FederationSection.MOM.EnableServiceReporting
+   ;; DESCRIPTION: This controls whether the federate has service reporting
+   ;; enabled upon startup.
+   ;; RANGE: An enumeration value {Yes, No}.
+   ;; DEFAULT_VALUE: No
+   ;;
+   ;;;;   (EnableServiceReporting No)
+   );; End of FederationSection.MOM
+
+  (FederateSection
+   ;; Entries in this section apply to federate level components.  They can 
+   ;; also be used to override upper section parameters.
+
+
+   (EventRetractionHandleCacheOptions
+    ;; Each federate keeps a cache of Event Retraction Handles that it has
+    ;; generated.  To prevent this cache from growing without bound, Event
+    ;; Retraction Handles with a timestamp in the past are periodically purged.
+
+    ;; IMPORTANT NOTE: setting both
+    ;; MinimumCacheSizeBeforePerformingPurge and
+    ;; NumberOfEventRetractionHandlesToCreateBeforeStartingNewPurgeCycle
+    ;; to 0 will cause event retractions to be disabled.  For a
+    ;; federation with time managed federates that is not using event
+    ;; retractions, this will result in a minor performance
+    ;; improvement and a significant drop in memory usage.
+
+    ;; PARAMETER: FederateSection.EventRetractionHandleCacheOptions.MinimumCacheSizeBeforePerformingPurge
+    ;; DESCRIPTION: If the event retraction cache has fewer then
+    ;; MinimumCacheSizeBeforePerformingPurge entries, purging will be skipped.
+    ;; RANGE: An unsigned long
+    ;; DEFAULT_VALUE: 65535
+    ;;
+    ;;;;    (MinimumCacheSizeBeforePerformingPurge 65535)
+
+    ;; PARAMETER: FederateSection.EventRetractionHandleCacheOptions.NumberOfEventRetractionHandlesToCreateBeforeStartingNewPurgeCycle
+    ;; DESCRIPTION: Purging of the Event Retraction Handle cache may occur if at
+    ;; least NumberOfEventRetractionHandlesToCreateBeforeStartingNewPurgeCycle
+    ;; Event Retraction Handles have been added to the cache since the last time
+    ;; the cache was purged.
+    ;; RANGE: An unsigned long
+    ;; DEFAULT_VALUE: 1024
+    ;;
+    ;;;;(NumberOfEventRetractionHandlesToCreateBeforeStartingNewPurgeCycle 1024)
+    );; End of ...FederateSection.EventRetractionHandleCacheOptions
+   );; End of FederationSection.FederateSection
+  );; End of FederationSection
+ );; End of RTI
+

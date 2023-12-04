@@ -1,0 +1,498 @@
+/*  
+    Author:  Elizabeth Gordon
+    Description:  Simple flocking demo.
+
+    This demo is based on the Boids work done by Craig Reynolds.  
+    More information on Boids can be found on his website at 
+    http://www.red3d.com/cwr/boids/.  
+
+    A boid is a very simple agent, using three rules to navigate around 
+    its environment.  The result is similar to the flocking behaviour of 
+    fish or cattle.  The original Boids existed in a 3-d environment, and 
+    were intended to suggest flocks of birds.
+
+    The three behaviours are:  
+    1.  avoid crowding  
+    2.  fly the same direction as the flock
+    3.  fly towards other members of the flock
+
+    Each behaviour votes to steer in a particular direction, rating its vote 
+    according to urgency.  The final direction is computed using a weighted 
+    average of the three votes.
+
+    This demo only adjusts the heading of the boids, not the speed.  This 
+    means that it is quite easy for the boids to lose each other.  Really, 
+    a boid that is far away from the flock should speed up.
+*/
+
+
+uses prblib;            ;;; poprulebase
+uses rclib;             ;;; rc graphics library
+uses simlib;            ;;; necessary for sim agent
+uses sim_agent;         ;;; sim_agent provides base classes
+uses sim_picagent;      ;;; extensions of sim_agent for graphics
+uses rc_window_object;  ;;; for manipulation of windows
+
+winx=550;
+winy=550;
+vars MAX_ACCEL=5;
+vars MIN_ACCEL=(-5);
+vars MAX_SPEED = 10; 
+vars MIN_SPEED=1;
+
+;;; First define the class.  It inherits from sim_movable_agent, which 
+;;; means that it can be displayed in a window and moved with the mouse.  
+;;; The inherited slots sim_x and sim_y specify the agent's position.
+define :class boid; is sim_movable_agent;
+    slot boid_heading = 200;   ;;; the boid's heading
+    slot boid_speed = 5;     ;;; the boid's speed
+
+    ;;; The next line specifies how the boids are displayed - in this 
+    ;;; case as small blue circles.
+    slot rc_pic_lines = [COLOUR 'blue' CLOSED {-5 0} {5 5} {0 -5}];
+
+    ;;; The rulesystem that the agent should use.  (used by sim_agent)
+    slot sim_rulesystem = boid_rulesystem;
+    
+    ;;; Specifies functions for obtaining information about other objects.  
+    ;;; The number specifies how far the agent can see.
+    slot sim_sensors = [{sim_sense_agent 100}];
+enddefine;
+
+
+
+;;; sim_sense_agent specifies what info each agent gets about the things 
+;;; it senses.  This function is for sensing other boids.
+;;; Another sim_sense_agent method would be necessary for stationary objects
+;;; if there were any.  The dist parameter is how far apart the boids are, 
+;;; and a1 is the current boid.
+define :method sim_sense_agent(a1:boid, a2:boid, dist);
+    unless a1 = a2   ;;; check that the boid isn't sensing itself
+	    then
+	;;; This specifies what information should be added to the database.
+	[new_sense_data
+ 	 ^(a2.boid_heading)
+ 	 ^(a2.boid_speed)
+ 	 ^(a2.sim_x)
+ 	 ^(a2.sim_y)
+ 	 ^dist
+	 ]
+endunless
+enddefine;
+    
+
+define accumulate_total(v1,u1,v2,u2,v3,u3)->v;
+    ;;;This uses the accumulator method
+	(u1/100)*v1->v;
+	100-u1->amount_left;
+	if(amount_left>u2) then u2->amount_left; endif;	
+	
+	for x from 1 to amount_left do
+	    v+(v2/100)->v;		
+    	endfor;
+	
+	100-u1-u2->amount_left;
+	
+	for x from 1 to amount_left do
+	    v+(v3/100)->v;
+	endfor;
+    enddefine;
+    
+
+;;; Define the rulesystem, and specify what rulesets it includes.
+define :rulesystem boid_rulesystem;
+    include: boid_rules 
+enddefine;
+
+;;; Define the ruleset.
+define :ruleset boid_rules;
+
+    ;;; Rule to create database entries  
+    RULE start_heading
+    [NOT flock_heading =]
+    [NOT flock_speed =]
+    [NOT flock_xpos =]
+    [NOT flock_ypos =]
+    [NOT min_dist =] 
+    [NOT flock_size =]
+    ==> 
+    [flock_heading 0]
+    [flock_speed 0]
+    [flock_xpos 0]
+    [flock_ypos 0]
+    [flock_size 0]
+    [min_dist 500]
+
+
+   ;;; The update rule sets the new heading and moves the boid in the 
+    ;;; correct direction.  The procedure sim_move_to assigns the sim_x and 
+    ;;; sim_y variables and updates the graphics.  This rule also clears the 
+    ;;; computed averages for the next cycle, and deletes the update entry.
+    RULE update
+    [flock_heading =]
+    [flock_speed =]
+    [flock_xpos =]
+    [flock_ypos =]
+    [flock_size =]
+    [min_dist =]
+    [update ?h]
+    [update_accel ?a]
+    ==>
+    [REPLACE 1 [flock_heading 0]]
+    [REPLACE 2 [flock_speed 0]]
+    [REPLACE 3 [flock_xpos 0]]
+    [REPLACE 4 [flock_ypos 0]]
+    [REPLACE 5 [flock_size 0]]
+    [REPLACE 6 [min_dist 500]]
+    [POP11 h -> sim_myself.boid_heading]
+    [POP11 if(a>MAX_ACCEL) then MAX_ACCEL->a; endif;]
+    [POP11 if(a<MIN_ACCEL) then MIN_ACCEL->a; endif;]
+    [POP11 sim_myself.boid_speed+a->sim_myself.boid_speed]
+    [POP11 if(sim_myself.boid_speed>MAX_SPEED) then 
+	 MAX_SPEED->sim_myself.boid_speed; endif;]
+    [POP11 if(sim_myself.boid_speed<MIN_SPEED) then 
+	 MIN_SPEED->sim_myself.boid_speed; endif;]
+    [LVARS 
+     [x = (cos(h) / sim_myself.boid_speed) + sim_myself.sim_x]
+     [y = (sin(h) / sim_myself.boid_speed) + sim_myself.sim_y]]
+    [POP11 sim_move_to(sim_myself, x, y, true)]
+    [DEL 7]
+    [DEL 8]
+
+
+    ;;; For each new agent sensed, recompute the averages
+
+    ;;; The first rule applies when the distance is less than 
+    ;;; the current minimum.
+    ;;; The rule checks for new sensory data and assigns it the name sense_data
+    ;;; Then it checks that all the correct entries are in the database.  
+    ;;; The WHERE condition specifies that the distance is less than the 
+    ;;; minimum.  The last rule makes sure this rule doesn't run when we've 
+    ;;; already computed the new heading.
+
+    ;;; Note:  the average speed isn't actually being used for anything, but 
+    ;;; the three boids behaviours could adjust speed as well as heading.
+    RULE compute_averages1
+    [new_sense_data ?heading ?speed ?x ?y ?dist] [->> sense_data]
+    [flock_heading ?fh] 
+    [flock_speed ?fs]
+    [flock_xpos ?fx]
+    [flock_ypos ?fy]
+    [flock_size ?sz]
+    [min_dist ?m]
+    [WHERE dist < m]
+    [NOT update ==]
+    ==>
+    [LVARS 
+     [new_size = (sz + 1)]
+     [new_heading = ((fh + heading)/new_size)]
+     [new_speed = ((fs + speed)/new_size) ]
+     [new_xpos = ((fx + x)/new_size)]
+     [new_ypos = ((fy + y)/new_size)]]
+
+    [POP11 ['Heading' ^(fh + heading) ^new_heading]=>]
+    [NOT flock_heading ?fh]
+    [NOT flock_speed ?fs]
+    [NOT flock_xpos ?fx]
+    [NOT flock_ypos ?fy]
+    [NOT flock_size ?sz]
+    [NOT min_dist ?m]
+    [flock_heading ?new_heading]
+    [flock_speed ?new_speed]
+    [flock_xpos ?new_xpos]
+    [flock_ypos ?new_ypos]
+    [flock_size ?new_size]
+    [min_dist ?dist]
+    [DEL ?sense_data]
+
+    ;;; The second rule applies when the distance is not less than 
+    ;;; the current minimum
+    RULE compute_averages2
+    [new_sense_data ?heading ?speed ?x ?y ?dist] [->> sense_data]
+    [flock_heading ?fh] 
+    [flock_speed ?fs]
+    [flock_xpos ?fx]
+    [flock_ypos ?fy]
+    [flock_size ?sz]
+    [min_dist ?m]
+    [WHERE dist >= m]
+    [NOT update ==]
+    ==>
+    [LVARS 
+     [new_heading = (fh + heading)]
+     [new_speed = (fs + speed)]
+     [new_xpos = (fx + x)]
+     [new_ypos = (fy + y)]
+     [new_size = sz + 1]] 
+     [POP11 ['Heading' ^(fh + heading) ^new_heading]=>]
+    [NOT flock_heading ?fh]
+    [NOT flock_speed ?fs]
+    [NOT flock_xpos ?fx]
+    [NOT flock_ypos ?fy]
+    [NOT flock_size ?sz]
+    [flock_heading ?new_heading]
+    [flock_speed ?new_speed]
+    [flock_xpos ?new_xpos]
+    [flock_ypos ?new_ypos]
+    [flock_size ?new_size]
+    [DEL ?sense_data]
+
+
+
+
+    ;;; The first boids behaviour tries to move away from 
+    ;;; other boids when conditions are too crowded.  The first and 
+    ;;; basic rule computes a heading that will move the boid away from the 
+    ;;; flock, and assigns it an urgency according to how crowded it is.
+    RULE avoid_crowding 
+    [flock_heading ?fh]
+    [flock_size ?sz]
+    [flock_xpos ?x]
+    [flock_ypos ?y]
+    [min_dist ?m]
+    [WHERE m <= 100]
+    [WHERE x  /== sim_myself.sim_x]
+    [WHERE y  /== sim_myself.sim_y]
+    ==>
+    [LVARS 
+     [nx = x - sim_myself.sim_x]
+     [d = distance(x, y, sim_myself.sim_x, sim_myself.sim_y)]
+     [heading = 180 - arccos(nx / d)]    
+     [urgency = 100 - m]
+     [accel = (m/100) * MAX_ACCEL]]
+    [desired_heading_1 ?heading ?urgency]
+    [desired_accel_1 ?accel ?urgency]
+    
+    ;;; If the flock is really far away, vote for the flock heading with 
+    ;;; low urgency. ie cohesion should have more chance (move closer to flock)
+    ;;; Use max accel with low urgency also (try and catch flock up).
+    RULE avoid_crowding2
+    [flock_heading ?fh]
+    [flock_size ?sz]
+    [min_dist ?m]
+    [WHERE m > 100]
+    [WHERE sz > 0]
+    [NOT update ==]
+    ==>
+    [LVARS 
+     [heading = fh]]
+    [desired_heading_1 ?heading 20]
+    [desired_accel_1 ?MAX_ACCEL 20]
+
+    ;;; For crowded situations where the boid is at the center of the flock 
+    ;;; (so direction to move is difficult to compute).  Votes for the 
+    ;;; current flock heading (other boids should move away from this one).
+    ;;; Also maintain current speed (ie 0 acceleration)
+    RULE avoid_crowding3
+    [flock_heading ?fh]
+    [NOT desired_heading_1 ==]
+    [NOT update ==]
+    ==>
+    [LVARS 
+     [heading = fh]]
+    [desired_heading_1 ?heading 50]
+    [desired_accel_1 0 50]
+
+    ;;; The second boids behaviour tries to steer in the same 
+    ;;; direction as other boids.  It always votes for the current flock 
+    ;;; heading.  The urgency is assigned according to the difference between 
+    ;;; the boid's current heading and the flock heading. Also change
+    ;;; my own speed to try and match the speed of the flock
+    RULE match_heading
+    [flock_heading ?fh]
+    [flock_speed ?fs]
+    [NOT update ==]
+    ==>
+    [LVARS 
+     [heading = fh]
+     [urgency = (abs(sim_myself.boid_heading - fh) / 360.0) * 100.0]
+     [accel = (sim_myself.boid_speed - fs)]
+    ] 
+    
+    [desired_heading_2 ?heading ?urgency]
+    [desired_accel_2 ?accel 60]
+
+    ;;; The third boids behaviour tries to move towards other boids 
+
+    ;;; The first rule votes for heading toward the center of the flock, 
+    ;;; with urgency according to how far away it is.
+    RULE match_position
+    [flock_size ?sz]
+    [flock_xpos ?x]
+    [flock_ypos ?y]
+    [WHERE x /== sim_myself.sim_x]  ;;;We're not centre of flock
+    [WHERE y /== sim_myself.sim_y]
+    [NOT update ==]
+    ==>
+    [LVARS 
+     [nx = x - sim_myself.sim_x]
+     [d = distance(x, y, sim_myself.sim_x, sim_myself.sim_y)]
+     [h = arccos(nx / d)]
+     [accel = (d/100)*MAX_ACCEL]
+    ]
+    [POP11 if (d > 100) then 100 -> d; endif;]
+    [desired_heading_3 ?h ?d]
+    [desired_accel_3 ?accel ?d]
+
+
+    ;;; The second rule is 
+    ;;; for cases where the boid is already at the center of the flock, 
+    ;;; in which case it votes to keep the same heading (with medium
+    ;;; urgency) and speed.
+    RULE match_position2
+    [NOT desired_heading_3 ==]
+    [NOT update ==]
+    ==>
+    [LVARS 
+     [h = sim_myself.boid_heading]
+    ]
+    [desired_heading_3 ?h 50]
+    [desired_accel 0 50] 
+
+    ;;; This rule takes the three votes, indicated by desired_heading entries 
+    ;;; in the database, and computes a weighted average.  The result is 
+    ;;; added as an update entry, and the three desired headings are deleted.
+    RULE calculate_heading
+    [desired_heading_1 ?h1 ?u1]
+    [desired_heading_2 ?h2 ?u2]
+    [desired_heading_3 ?h3 ?u3]
+    [POP11 ['I want to go' ^h1 'with' ^u1]=>]
+    [POP11 ['I want to go' ^h2 'with' ^u2]=>]
+    [POP11 ['I want to go' ^h3 'with' ^u3]=>]
+    [NOT update ==]
+    ==>
+    [LVARS 
+     [h = accumulate_total(h1,u1,h2,u2,h3,u3)]
+    ]
+    [POP11 ['I ended up going' ^h]=>]
+    [DEL 1]
+    [DEL 2]
+    [DEL 3]
+    [update ?h]
+
+ RULE calculate_accel
+    [desired_accel_1 ?a1 ?u1]
+    [desired_accel_2 ?a2 ?u2]
+    [desired_accel_3 ?a3 ?u3]
+    [POP11 ['I want to accel' ^a1 'with' ^u1]=>]
+    [POP11 ['I want to accel' ^a2 'with' ^u2]=>]
+    [POP11 ['I want to accel' ^a3 'with' ^u3]=>]
+    [NOT update_accel ==]
+    ==>    
+    [LVARS     
+     [a = accumulate_total(a1,u1,a2,u2,a3,u3)]
+    ]
+    [POP11 ['I ended up accel' ^a]=>]
+    [DEL 1]
+    [DEL 2]
+    [DEL 3]
+    [update_accel ?a]
+    
+
+
+    ;;; This last set of rules makes the boids wrap around if they fly off 
+    ;;; the edge of the window.
+    RULE wrap_posx
+    [WHERE sim_myself.sim_x > 300]
+    ==>
+    [POP11 sim_move_to(sim_myself, -300, sim_myself.sim_y, true)]
+
+    RULE wrap_negx
+    [WHERE sim_myself.sim_x < -300]
+    ==>
+    [POP11 sim_move_to(sim_myself, 300, sim_myself.sim_y, true)]
+
+    RULE wrap_posy
+    [WHERE sim_myself.sim_y > 300]
+    ==>
+    [POP11 sim_move_to(sim_myself, sim_myself.sim_x, -300, true)]
+
+    RULE wrap_negy
+    [WHERE sim_myself.sim_y < -300]
+    ==> 
+    [POP11 sim_move_to(sim_myself, sim_myself.sim_x, 300, true)]
+
+
+enddefine;
+
+
+;;; Computes the distance between two points.
+define distance(x1, y1, x2, y2) -> dist;
+    sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2))) -> dist;
+enddefine;
+
+
+;;; Create some boids, and set their positions.  
+define :instance agent1:boid;
+    boid_heading = 0;
+    sim_x = -80;
+    sim_y = -80;
+enddefine;
+
+define :instance agent2:boid;
+    boid_heading = 250;
+    sim_x = 0;
+    sim_y = 0;
+enddefine;
+
+define :instance agent3:boid;
+    boid_heading = 160;
+    sim_x = 2;
+    sim_y = 0;
+enddefine;
+
+define :instance agent4:boid;
+    boid_heading = 180;
+    sim_x = 2;
+    sim_y = 4;
+enddefine;
+
+define :instance agent5:boid;
+    boid_heading = 275;
+    sim_x = 2;
+    sim_y = -5;
+enddefine;
+
+define :instance agent6:boid;
+    boid_heading = 45;
+    sim_x = -6;
+    sim_y = 3;
+enddefine;
+
+
+
+;;; This function creates the window, adds the agents, and starts the 
+;;; simulation.    
+define setup(num);
+   
+    
+    winx=550;
+    winy=550;
+
+    ;;; First create a window
+    rc_new_window_object(250, 250, 600, 600, true, newsim_picagent_window) ->win;
+    
+    
+    ;;; Add the three agents to the window
+    rc_add_containers(agent1, [^win]);
+    rc_add_containers(agent2, [^win]);
+  ;;;  rc_add_containers(agent3, [^win]);
+;;;    rc_add_containers(agent4, [^win]);
+;;;    rc_add_containers(agent5, [^win]);
+;;;    rc_add_containers(agent6, [^win]);
+
+    ;;; This allows all rules to fire, and creates a new copy of each rule 
+    ;;; for each set of matching variables.  If this were not true, each 
+    ;;; agent would process only the first set of sensory data.
+    true->prb_allrules;
+
+    ;;; Start sim_agent, running each agent for num cycles.
+;;;    sim_scheduler([^agent1 ^agent2 ^agent3 ^agent4 ^agent5 ^agent6], num);
+    sim_scheduler([^agent1 ^agent2], num);
+enddefine;
+    
+define continue(num);
+    ;;;       sim_scheduler([^agent1 ^agent2 ^agent3 ^agent4 ^agent5 ^agent6], num);
+    sim_scheduler([^agent1 ^agent2], num);
+
+   enddefine;

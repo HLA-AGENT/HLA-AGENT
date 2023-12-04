@@ -1,0 +1,49 @@
+** [Starting run number:  1]
+** [about to draw the tileworld <true>]
+87,8587,8588,8689,8789,8790,8890,8890,8891,8992,9092,9092,9092,9092,9093,9194,9294,9292,9292,9292,9292,9292,9292,9293,9393,9394,9494,9494,9494,9494,9495,9595,9595,9596,9696,9696,9696,9696,9696,9696,9694,9695,9795,9795,9796,9896,9896,9896,9897,9997,9997,9997,9997,9996,9996,9996,9995,9993,9993,9993,9993,10093,10093,10093,10093,10092,10091,10091,10091,10091,10091,10091,10091,10093,10292,10292,10292,10293,10393,10393,10393,10392,10391,10491,10490,10490,10492,10693,10793,10795,10995,10995,10996,11097,11198,11298,11298,11298,11298,11498,11498,11498,11498,11498,11498,11499,11599,11597,11597,11597,11598,11698,11698,11698,11698,11698,11696,11696,11696,11696,11696,11696,11696,11697,11797,11797,11797,11797,11796,11796,11797,11897,11898,11997,11997,11997,11997,11996,12095,12095,12094,12094,12094,12094,12194,12195,12297,12497,12497,12493,12493,12493,12493,12493,12493,12493,12492,12492,12492,12492,12492,12492,12492,12494,12694,12694,12694,12694,12694,12694,12694,12692,12693,12793,12792,12792,12792,12792,12792,12792,12792,12792,12792,12789,12789,12789,12790,12890,12891,12991,12991,12992,13092,13092,13091,13092,13192,13191,13191,13192,132
+============== Finished. Cycle 200 ============
+** [Tileworld probability:  0.1]
+** [The actors in the run were [agent3 agent1 agent2]]
+** [The detailed actors are [<tile_agent: agent3> <tile_agent: agent2> <tileworld: agent1>]]
+** [********]
+** [actor name : agent2]
+** [Number of accesses made by agent2 : 35815]
+** [Number of updates made by agent2 : 96]
+** [Class : <key tile_agent>]
+** [********]
+** [********]
+** [actor name : agent1]
+** [Number of accesses made by agent1 : 4953]
+** [Number of updates made by agent1 : 96]
+** [Class : <key tileworld>]
+** [********]
+** [********]
+** [actor name : agent3]
+** [Number of accesses made by agent3 : 39029]
+** [Number of updates made by agent3 : 218]
+** [Class : <key tile_agent>]
+** [********]
+** [The common accesses between 1 and 20 were 535 rollback patterns 0]
+** [The common accesses between 41 and 60 were 618 rollback patterns 0]
+** [The common accesses between 81 and 100 were 560 rollback patterns 0]
+** [The common accesses between 121 and 140 were 1107 rollback patterns 30584]
+** [The common accesses between 161 and 180 were 1856 rollback patterns 57968]
+** [The actors in the run were [agent3 agent1 agent2]]
+** [The detailed actors are [<tile_agent: agent3> <tile_agent: agent2> <tileworld: agent1>]]
+
+Number of interrupts: 5718
+CPU time: 172.02 seconds, GC time: 0.47 seconds
+
+              -Cumulative-
+Count  %Time  Count  %Time
+ 2519   44.1   2519   44.1  lmember_=
+ 1382   24.2   3901   68.2  (Sys$-Eq__Fullrec)
+  604   10.6   4505   78.8  =_instance
+  473    8.3   4978   87.1  get_shared_accesses_in(sim_processed_instrument_actor,sim_processed_instrument_actor,_,_)
+  302    5.3   5280   92.3  sim_datum_object
+  158    2.8   5438   95.1  =_instance(_,_)
+   28    0.5   5466   95.6  sysmatch
+   18    0.3   5484   95.9  prb_instance
+   17    0.3   5501   96.2  isindata
+    7    0.1   5508   96.3  prb_subflush_fixed
+

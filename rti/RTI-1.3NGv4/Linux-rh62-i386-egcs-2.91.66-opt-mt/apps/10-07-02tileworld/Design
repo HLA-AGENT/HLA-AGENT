@@ -1,0 +1,404 @@
+HLA - SIM AGENT Interface.
+
+I have divided this into three sections, the first describes the
+precise stages of a federation execution including all the C++ code to
+invoke call to the RTI.  The second section introduces some design
+problems and indicates a possible design and what would be required to
+implement that design. The final section is a list of the minimal RTI
+calls needed for our tileworld implementation.
+
+----------------------------------------------------------------------
+SECTION ONE
+----------------------------------------------------------------------
+
+The three stages to HLA execution 
+
+*Initialisation
+*Updates
+*Resignation
+
++-----------------------------------------------+
+|---------------Initialisation-----------------|
++-----------------------------------------------+
+|The six stages for initialisation are,         |
+|1.1 -Declare Objects-                          |
+|1.2 -Create & join the federation execution-   |
+|1.3 -Get RTI id's                              |
+|1.4 -Publish & Subscribe                       |
+|1.5 -Register Objects                          |
+|1.6 -Set Time Management properties            |
++-----------------------------------------------+
+
+
+-------------------------
+-1.1 Declaring Objects  -
+-------------------------
+
+The objects are created once at the beginning of the execution of each
+federate,
+
+Create Ambassador Objects
+
+RTI::RTIambassador       rtiAmb;         // libRTI provided
+TwFederateAmbassador     fedAmb;         // User-defined
+
+The first of these is provided in the RTI libraries, the second is my
+own implementation of the RTI::FederateAmbassador class which is again
+provided in the RTI libraries. It is via these two objects (and their
+methods)that all calls and callbacks are made to the RTI. For our
+initial design I have listed a minimal set of RTI calls which are
+needed (see section 3) 31 for the RTIambassador and 13 for the
+FederateAmbassador.
+
+
+Create Federate Id
+
+RTI::FederateHandle      federateId;
+
+This is the id which uniquely identifies the federate in the
+federation. It's instantiated when the federate joins the execution.
+
+----------------------------------------
+-1.2 Create & Join Federation execution-
+----------------------------------------
+These are performed once by every federate,
+
+Create execution
+
+rtiAmb.createFederationExecution("fedExecName", "fedfile.fed");
+
+If successful this creates the federation execution on the current
+machine. An exception is raised if it already exists (this is caught
+and ignored). This first argument is a string which is the name of the
+federation, the second is the FOM (stored in the fed file).
+
+Join execution
+
+federateId = rtiAmb.joinFederationExecution( "FederateName",
+                                                         "fedExecName", 
+                                                         &fedAmb);
+
+This is normally placed in a loop for some number of attempts at
+joining. The call will raise an exception if the federate already
+belongs to the federation execution, or if the federation execution
+does not exist. If the second exception is raised the program should
+wait by ticking the RTI (see later).
+
+--------------------------------------
+-1.3 Getting the RTI Id's            -        
+--------------------------------------
+
+This needs to be done by each federate once for all required attributes,
+
+Get Class & Attribute Handles
+
+RTI::ObjectClassHandle ClassTypeId  = 
+        rtiAmb.getObjectClassHandle("ClassString");
+RTI::AttributeHandle AttributeTypeId  = 
+        rtiAmb.getAttributeHandle( "AttrString","ClassString");
+
+This gets the Id's for each class and attribute in the FOM from the
+RTI. The "ClassString" should correspond to the name of a class type
+given in fed file. The "AttrString" should correspond to the name of
+one the attributes of "ClassString" given in the fed file. So for the
+example above the fed file should contain something like,
+
+(class ClassString
+          (attribute AttrString reliable timestamp)
+)
+
+
+--------------------------------------
+-1.4 Publish & subscribe             -
+--------------------------------------
+
+Although the publish and subscription may be changed during the
+execution it isn't needed for the tileworld implementation. Therefore
+the publish and subscribe stage is performed once by each federate.
+
+//Create AttributeHandle set
+RTI::AttributeHandleSet *theAttributes;
+theAttributes = RTI::AttributeHandleSetFactory::create(x) //x=num of atts
+//Add required Attributes
+theAttributes.add( AttributeTypeId );
+//Subscribe and publish attributes
+rtiAmb.subscribeObjectClassAttributes( ClassTypeId,*theAttributes );
+rtiAmb.publishObjectClass( ClassTypeId,*theAttributes);
+
+To subscribe and publish attributes you need to first create a
+Attribute Handle set. Which is more a less a list of the attributes we
+are interested for a particular class. So an Attribute Handle Set
+must be created for all classes in which we have an interest (publish
+or subscribe). Then for each object class we call the subscribe or
+publish with this along with the Id for the object class. There are
+separate subscribe and publish methods for interactions but we're not
+using them.
+
+-------------------------------------
+-1.5 Register Objects               -
+-------------------------------------
+
+Registration of objects is done at the beginning and throughout the
+federates lifetime.
+
+instanceId = rtiAmb.registerObjectInstance(ClassTypeId);
+
+registers a new object with the RTI of type ClassTypeId. This object
+will then be discovered by other objects.
+
+-------------------------------------
+-1.6 Set Time management properties -
+-------------------------------------
+
+Again although it is possible to change the time management properties
+during the execution this won't be the case for the tileworld
+implementation.
+
+RTI::FedTime &          grantTime=(*(RTI::FedTimeFactory::makeZero()));
+static RTIfedTime                    lookahead;
+
+rtiAmb.enableTimeConstrained();
+rtiAmb.enableTimeRegulation( grantTime, lookahead);
+
+
+
++-----------------------------------------------+
+|-------------------Updates---------------------|
++-----------------------------------------------+
+|There are 2 stages during updates (looped)     |
+|1. -Update current state-                      | 
+|2. -Request Time Advance-                      |
+|-Note                                          |
+| Callbacks aren't included here                |
++-----------------------------------------------+
+
+------------------------------------
+-2.1 Update Current State (send)   -
+------------------------------------
+
+The update is performed at the end of each cycle.
+
+RTI::AttributeHandleValuePairSet* pNvpSet = CreateNVPSet()
+(void) rtiAmb.updateAttributeValues( InstanceId, 
+                                     *pNvpSet,
+                                      LastTimePlusLookahead, 
+                                      NULL );
+
+Firstly we must create an AttributeHandleValuePairSet which contains
+all the id's of the attributes that have changed (or need to be
+updated) along with their value. We then invoke the update passing the
+instance id, the fore mentioned AHVPset and the time of the update.
+The call does return an event retraction handle.
+
+-------------------------------------
+-2.2 Request Time Advance           -
+-------------------------------------
+
+The request time advance is performed after the update at the end of
+each cycle,
+
+const RTIfedTime timeStep(10.0);
+RTIfedTime requestTime(timeStep.getTime());
+		 requestTime += grantTime;
+		 timeAdvGrant = RTI::RTI_FALSE;
+		 rtiAmb.timeAdvanceRequest( requestTime );
+
+while( timeAdvGrant != RTI::RTI_TRUE )
+         {
+          	   rtiAmb.tick(1.0, 1.1);
+         }
+
+Make a request for time advance loop and tick the RTI while we're
+waiting for the grant to be accepted.
+
+
++-----------------------------------------------+
+|-------------------Resign----------------------|
++-----------------------------------------------+
+|There are 3 stages                             |
+|1. -Disable Time management-                   | 
+|2. -Resign from Federation-                    |
+|3. -Destroy Federation Execution-              |
++-----------------------------------------------+
+
+All resignation calls are made once at the end of the federates life.
+
+-------------------------------------
+-3.1 Disable Time management        -
+-------------------------------------
+rtiAmb.disableTimeConstrained();
+rtiAmb.disableTimeRegulation();
+
+
+-------------------------------------
+-3.2 Resign from Federation         -
+-------------------------------------
+rtiAmb.resignFederationExecution(
+                   RTI::DELETE_OBJECTS_AND_RELEASE_ATTRIBUTES ); 
+
+Resign from the federation execution to remove this federate from
+participation. The flag provided will instruct the RTI to call
+deleteObjectInstance for all objects this federate has
+privilegeToDelete for (which by default is all objects that this
+federate registered) and to release ownership of any attributes that
+this federate owns but does not own the privilegeToDelete for.
+
+------------------------------------
+-3.3 Destroy Federation execution  -
+------------------------------------
+rtiAmb.destroyFederationExecution("fedExecName");
+
+Destroys the federation execution. Raises exceptions when there are
+still federates joined to the federation and when the federation
+doesn't exist. Both can be caught and ignored, this way the last
+federate to leave will be the only one to successfully destroy the
+federation.
+
+
+
+----------------------------------------------------------------------
+SECTION TWO
+----------------------------------------------------------------------
+
++---------------+
+|Design Problems|
++---------------+
+
+Obviously much of the code above needs to called (in some way) from
+poplog. In fact the ideal situation would be to make all calls to the
+RTI straight from poplog with little conversion or manipulation to the
+C++ code.  There are various problems in doing this, the problems I
+have encountered (so far) are,
+
+*Poplog not fully supporting C++ (Objects) 
+
+Poplog's external C calling, as I understand it, only allows 3 types
+to be returned from functions, integers, floats and pointers. It is
+therefore not possible to store the Ambassadors on the poplog side as
+they are instances of C++ classes.
+
+PROPOSED SOLUTION: Write C wrappers for all the methods used during
+the execution. These would be standard C functions collected in a file
+which contains a global variable containing the rtiAmb. 
+
+*Poplog not able to handle callbacks
+
+So far only the RTI Ambassador calls have been used that is calls
+going from the federate to the RTI. Callbacks (from RTI to Federate)
+are handled by the FederateAmbassador. This is the main problem with
+poplog, it doesn't support (very well) asynchronous callbacks
+
+PROPOSED SOLUTION: Use a C++ implementation for the federate
+Ambassador, any calls are stored appropriately in C++ data types. The
+poplog side then invokes a getUpdates() procedure which makes various
+external C 'get' calls for each of the possible callbacks.
+
+
+As it stands the design would consist of...
+
+1. Writing Poplog procedures for all RTIAmbassador methods needed. (half DONE)
+
+2. Writing Poplog procedures for all RTI Support services needed. (half DONE)
+
+3.Writing C to C++ wrappers for all RTIAmbassador methods. (Convert 
+  methods to functions) (DONE)
+
+4.Writing C to C++ wrappers for all RTI Support services. (DONE)
+  
+5.Write Federate Ambassador in C++   (DONE)
+
+6.Write extension to federate Ambassador to store all calls made(DONE)
+
+7.Write Poplog procedure which calls federate Ambassador to get
+updates and stores data locally, this may also involve creating new
+objects etc.
+
+
+
+----------------------------------------------------------------------
+SECTION THREE
+----------------------------------------------------------------------
+
+Here's the minimal set of RTI calls which I think will be required for
+our implementation of tileWorld,
+
+I have split it up into two sections, Calls by the RTIAmbassador and
+calls by the FederateAmbassador. Within each section I have split the
+calls into their relevant areas.
+
+**NOTE** The numbers in front of each method correspond to the number in
+the RTI Interface specification. This gives details of each call, what
+it returns, what parameters it takes, the exceptions it throws etc.
+
+
++---------------------+
+|RTIAmbassador methods|
++---------------------+
+
+*Federation Management*
+4.2 Create Federation Execution
+4.3 Destroy Federation Execution
+4.4 Join Federation Execution
+4.5 Resign Federation Execution
+
+*Declaration Management*
+5.2 Publish Object Class
+5.3 Unpublish Object Class
+5.6 Subscribe Object Class Attributes
+5.7 Unsubscribe Object Class
+
+*Object Management*
+6.2 Register Object Instance
+6.4 Update Attribute Values
+6.8 Delete Object Instance
+6.15 Request Attribute Value Update
+
+*Ownership Management*
+7.2 Unconditional Attribute Ownership Divesture
+7.8 Attribute Ownership Acquisition if Available (7.7 instead?)
+7.15 Query Attribute Ownership ??
+
+*Time Management*
+8.2 Enable Time Regulation
+8.5 Enable Time Constrained
+8.8 Time Advance Request
+8.12 Flush Queue Request
+Also 8.17,8.19,8.20??
+
+*Support Services*
+10.2 Get Object class handle
+10.3 Get Object class name
+10.4 Get Attribute handle
+10.5 Get Attribute name
+10.10 Get Object Instance handle
+10.11 Get Object Instance name
+10.17 Get Object class
+also RTI::tick()
+
++---------------------+
+|FedAmbassador methods|
++---------------------+
+
+*Declaration Management*
+5.10 Start Registration for object class
+5.11 Stop Registration for object class
+
+*Object Management*
+6.3 Discover object instance
+6.5 Reflect Attribute values
+6.9 Remove object instance
+6.16 Provide Attribute value update
+
+*Ownership management*
+7.5 Attribute Ownership divesture Notification
+7.6 Attribute Ownership Acquisition Notification
+7.9 Attribute Ownership Unavailable
+7.16 Inform Attribute ownership
+
+*Time management*
+8.3 Time regulation enabled
+8.6 Time constrained enabled
+8.13 Time advance grant
+
+
+

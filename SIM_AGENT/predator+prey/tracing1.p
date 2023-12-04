@@ -1,0 +1,383 @@
+;;; Uncomment this to redirect trace output to a file
+vars trace_file = discappend('SIM_DATA');
+
+;;; Note it may be necessary to do 
+;;;sysflush(discout_device(trace_file))
+;;; to force the buffers to be flushed.
+;;; Alternatively, simply apply trace_file to termin.
+;;; trace_file(termin);
+
+;;; This file contains the defintions of the following procedures:
+vars procedure run_simulation,
+     procedure default_simulation,
+     procedure update_stable,
+     procedure write_state_variables,
+     procedure state_variables,
+     procedure state_variable,
+     procedure model_region;
+
+/* Redefine existing tracing procedures so that they don't do anything. */
+
+define :method sim_agent_running_trace(object:sim_object);
+    ;;; Aaron suggested this to fix the `left-behind graphics' problem.
+    rc_sync_display();
+enddefine;
+
+;;; This should be called by both the predators and prey
+define :method sim_agent_running_trace(agent:predator_agent);
+    ;;; write_state_variables(agent);
+    update_stable(agent);
+    call_next_method(agent);
+enddefine;
+
+define :method sim_agent_running_trace(agent:prey_agent);
+    ;;; write_state_variables(agent);
+    update_stable(agent);
+    call_next_method(agent);
+enddefine;
+
+define :method sim_agent_messages_out_trace(agent:sim_agent);
+enddefine;
+
+define :method sim_agent_messages_in_trace(agent:sim_agent);
+enddefine;
+
+define :method sim_agent_actions_out_trace(object:sim_object);
+enddefine;
+
+
+define :method sim_agent_action_trace(object:sim_object);
+enddefine;
+
+
+define :method sim_agent_rulefamily_trace(object:sim_object, rulefamily);
+enddefine;
+
+
+define :method sim_agent_endrun_trace(object:sim_object);
+enddefine;
+
+define :method sim_agent_terminated_trace(object:sim_object,
+        number_run, runs, max_cycles);
+enddefine;
+
+;;;define vars procedure sim_scheduler_pausing_trace(objects, cycle);
+
+;;;    /* Code to dump screen images to file
+;;;    if isinteger(image_dump_frequency)
+;;;    and cycle mod image_dump_frequency == 0 then
+
+;;;         sysobey('xwd -name ' >< graphic_window >< ' ' ><
+;;;            '-out ' >< gensym(imagefile) >< '.xwd');
+
+;;;    endif;
+;;;    */
+
+;;;enddefine;
+
+define vars procedure sim_scheduler_finished(objects, cycle);
+enddefine;
+
+
+;;; Note that the following variables only get reinitialised when the next
+;;; simulation is run.
+
+;;; A vector holding the number of times a state variable was accessed by
+;;; exactly 0, 1, 2, ... agents for each simulation in this run.
+vars procedure agent_state_accesses;
+
+;;; An array whose values indicate the number of agents which accessed the
+;;; corresponding state variable this timestep.
+vars procedure stable;
+
+;;; Run the simulation n times.  Placement of obstacles, food, predators and
+;;; prey is random.  Note that the `sensor' ranges are smaller than the
+;;; defaults.
+define run_simulation(world_size, nobstacles, nfood, npredators, nprey, 
+		       ntimesteps, nsimulations);
+    
+    vars ;;; Variables for the width and height of the window
+          world_width = 400,
+          world_height = 400,
+          agent_size = 8,
+          obstacle_size = 10,
+    	  
+    	  ;;; Default values for agent slots
+    	  full_up = 300,
+    	  hunger = 100,
+    	  starving = 50,
+    	  food_range = 300,
+    	  forage_speed = 3,
+    	  start_energy = 100,
+    	  attack_range = 300,
+    	  attack_speed = 3,
+    	  escape_range = 50,
+    	  escape_speed = 3,
+    	  flocking_speed = 3,
+    	  flocking_range = 400,
+    	  
+    	  ;;; Sense limit for all agents
+    	  sense_limit = 10000000,
+    	  
+    	  ;;; Global attack information
+    	  attack_type = 'isolate',
+    	  attack_radius = 60,
+    	  
+    	  ;;; Global flocking information
+    	  flocking_radius = 40,
+    	  flock_type = 'herd',
+    	  ;;; Flock Separation Variable
+    	  flock_separation = 20,
+    	  
+    	  ;;; How much extra energy is used when implementing the fast actions
+    	  extra = 1,
+    	  
+    	  ;;; How much energy the food sources are worth
+    	  prey_energy_value = 100,
+    	  food_energy_value = 100,
+    	  
+	  nagents = npredators + nprey,
+    	  sim;
+    
+    newarray([1 ^nprey], 0) -> agent_state_accesses;
+    newarray([0 399 0 399], 0) -> stable;
+
+    for sim from 1 to nsimulations do
+	;;; Reinitialise the variables: not clear if we need to reset these
+	;;; between runs.  Most of them seem to be reset in setup();
+
+        ;;; Global lists to hold the objects
+        [] -> world_list;
+        [] -> predator_list;
+        [] -> prey_list;
+        [] -> obstacle_list;
+        [] -> food_list;
+	
+    	;;; Variables used for interface tasks
+        false -> world_create;
+        [] -> panel_list;
+        0 -> world_flag;
+        0 -> pred_flag;
+        0 -> prey_flag;
+        0 -> vars_flag;
+        0 -> run_flag;
+	
+        ;;; Counters to represent the number of different agents on screen.
+        0 -> prey_count;
+        0 -> predator_count;
+        0 -> obstacle_count;
+        0 -> food_count;
+	
+    	;;; Create the world ...
+    	world_size -> world_width;
+    	world_size -> world_height;
+    	setup();
+    	true -> world_create;
+	
+    	;;; Create the obstacles and food items ...
+    	add_obstacles(nobstacles, 2);
+    	add_food2(nfood, 2);
+	
+    	;;; Create the predators ...
+    	lvars predator_start_energy = 200, 
+	      predator_fullup_threshold = 350,
+	      predator_hunger_threshold = 150,
+	      predator_starvation_threshold = 50,
+	      predator_attack_range = 100,
+	      predator_attack_speed = 4;
+	
+    	add_predators(npredators, 2, 
+		      predator_start_energy,
+	  	      predator_fullup_threshold,
+	  	      predator_hunger_threshold,
+	  	      predator_starvation_threshold,
+	  	      predator_attack_range,
+	  	      predator_attack_speed);
+	
+    	;;; Create the prey ...
+	;;; Reducing the flocking and grazing ranges to 50 doesn't seem to
+	;;; result in an increase in the number of prey which starve, though
+	;;; it does perhaps reduce the amount of flocking.  However, small
+	;;; flocks do still form, which is enough for our purposes.
+    	lvars prey_start_energy = 200, 
+	      prey_fullup_threshold = 350,
+	      prey_hunger_threshold = 150,
+	      prey_starvation_threshold = 50,
+	      prey_escape_range = 50,
+	      prey_escape_speed = 3,
+	      prey_grazing_range = 50,
+	      prey_grazing_speed = 3,
+	      prey_flocking_range = 50,
+	      prey_flocking_speed = 3;
+	
+    	add_prey(nprey, 2,
+	     	 prey_start_energy,
+	     	 prey_fullup_threshold,
+	     	 prey_hunger_threshold,
+	     	 prey_starvation_threshold,
+	     	 prey_escape_range,
+	     	 prey_escape_speed,
+	     	 prey_grazing_range,
+	     	 prey_grazing_speed,
+	     	 prey_flocking_range,
+	     	 prey_flocking_speed);
+	
+	;;; Run the agents (usually done in run_agents, but this allows us
+	;;; to control whether the simulation output gets written).
+    	mainwin -> rc_current_window_object;
+
+    	sim_scheduler([ ^^predator_list ^^prey_list ^^obstacle_list 
+			^^food_list ^^world_list], ntimesteps);
+
+    	;;; Print information about the run
+;;;    	end_info(ntimesteps);
+	;;; Print out information about state accesses
+;;;	lvars nstate_vars = world_size * world_size,
+	lvars nstate_vars = 7845 * nprey,
+	      possible_accesses = nstate_vars * ntimesteps * sim * 1.0,
+	      p = 0, n;
+	printf('Probability:');
+	;;; Prey only
+	for n from 1 to nprey do
+	    printf(' %p agents %p', [^n ^(agent_state_accesses(n) / 
+					  possible_accesses)]);
+	    p + (n * (agent_state_accesses(n) / possible_accesses)) -> p;
+	    endfor;
+	printf(' total %p \n', [^p]);
+	endfor;
+    enddefine;
+
+vars default_simulation = run_simulation(% 400, 10, 10, 1, 10, 100, 2 %);
+
+;;; Update the vector holding the number of times a state variable was
+;;; accessed by exactly 0, 1, 2, ... agents for each simulation in this run.
+;;; Reintialise the array containing the number of agents which accessed the
+;;; corresponding state variable this timestep.
+define sim_scheduler_pausing_trace(objects, cycle);
+    lvars (xmin, xmax, ymin, ymax) = explode(boundslist(stable)),
+	  i, j, n;
+
+    fast_for i from xmin to xmax do
+	fast_for j from ymin to ymax do
+	    stable(i, j) -> n;
+	    if n > 0 then
+	    	agent_state_accesses(n) fi_+ 1 -> agent_state_accesses(n);
+	    	0 -> stable(i, j);
+		endif;
+	    endfor;
+	endfor;
+    enddefine;
+
+define :method update_stable(agent:predator_agent);
+;;;    lvars xa = rc_picx(agent) + (world_width / 2),
+;;; 	  ya = rc_picy(agent) + (world_width / 2),
+;;;	  range = predator_attack_range(agent),
+;;;	  dist = range**2,
+;;;	  xm, ym, x, y;
+
+;;;    ;;; We could call model_region here, but that gc's too much ...
+;;;    fast_for x from xa - range to xa + range do
+;;;	fast_for y from ya - range to ya + range do
+;;;	    ;;; We don't care that (x, y) are not modular coordinates,
+;;;	    ;;; since all we need here is the distance to the centre of
+;;;	    ;;; the region.
+;;;	    if ((x - xa)**2 + (y - ya)**2) <= dist then
+;;;		;;; Convert to modular coordinates ...
+;;;	       	x mod world_width -> xm;
+;;;		y mod world_width -> ym;
+;;;		stable(xm, ym) fi_+ 1 -> stable(xm, ym);
+;;;		endif;
+;;;	    endfor;
+;;;       	endfor;
+    enddefine;
+
+define :method update_stable(agent:prey_agent);
+    lvars xa = rc_picx(agent) + (world_width / 2),
+ 	  ya = rc_picy(agent) + (world_width / 2),
+	  range = max(prey_escape_range(agent), 
+		      max(prey_flocking_range(agent), food_sense_range(agent))),
+	  dist = range**2,
+	  x, y, xm, ym;
+
+    ;;; We could call model_region here, but that gc's too much ...
+    fast_for x from xa - range to xa + range do
+	fast_for y from ya - range to ya + range do
+	    ;;; We don't care that (x, y) are not modular coordinates,
+	    ;;; since all we need here is the distance to the centre of
+	    ;;; the region.
+	    if ((x - xa)**2 + (y - ya)**2) <= dist then
+		;;; Convert to modular coordinates ...
+	       	x mod world_width -> xm;
+		y mod world_width -> ym;
+		stable(xm, ym) fi_+ 1 -> stable(xm, ym);
+		endif;
+	    endfor;
+       	endfor;
+    enddefine;
+
+define :method write_state_variables(agent:predator_agent);
+    dlocal poplinewidth = false, cucharout = trace_file;
+    lvars x = rc_picx(agent),
+ 	  y = rc_picy(agent),
+	  s;
+
+    printf('cycle %p agent %p', [^sim_cycle_number ^(sim_name(agent))]);
+    for s in state_variables(x, y, attack_range, world_width) do
+	printf(' %p', [^s]);
+	endfor;
+    printf('\n');
+    enddefine;
+
+define :method write_state_variables(agent:prey_agent);
+    dlocal poplinewidth = false, cucharout = trace_file;
+    lvars x = rc_picx(agent),
+ 	  y = rc_picy(agent),
+	  s;
+    printf('cycle %p agent %p', [^sim_cycle_number ^(sim_name(agent))]);
+    for s in state_variables(x, y, escape_range, world_width) do
+	printf(' %p', [^s]);
+	endfor;
+    printf('\n');
+    enddefine;
+
+;;; Return the indices of the `state variables' corresponding to the
+;;; locations acessible from location (x, y) by an agent with sensor range
+;;; <range> in a square world of size <world_size>.
+;;; NOTE: this appears to be moving the origin twice: once in model_region
+;;; and once is state_variables
+define state_variables(x, y, range, world_size) -> indices;
+    maplist(model_region(x, y, range, world_size), 
+	    destpair <> state_variable(% world_size %)) -> indices;
+    enddefine;
+
+;;; Return the index of the `state variable' corresponding to location (x, y)
+;;; in a square world of size <world_size>.
+define state_variable(x, y, world_size) -> s;
+    ;;; Compute the index, assuming poparray_by_row is true, i.e. the index
+    ;;; is the same as the arrayvector subscript
+    ((y - 1) * world_size) + x -> s;
+    enddefine;
+
+;;; Return a list of the coordinates (represented as pairs) in the circular
+;;; region centred at (x, y) with radius <radius> in a square world of size
+;;; <world_size>
+define model_region(xcoord, ycoord, radius, world_size) -> region;
+    ;;; Move the origin from the centre of the environment (i.e.,
+    ;;; rclib coordinates) to the bottom left corner.
+    lvars xc = xcoord + (world_size / 2),
+	  yc = ycoord + (world_size / 2),
+	  x, y;
+
+    [% for x from xc - radius to xc + radius do
+	   for y from yc - radius to yc + radius do
+	       ;;; We don't care that (x, y) are not modular coordinates,
+	       ;;; since all we need here is the distance to the centre of
+	       ;;; the region.
+	       if ((x - xc)**2 + (y - yc)**2) <= radius**2 then
+		   ;;; Convert to modular coordinates ...
+	       	   conspair(x mod world_size, y mod world_size);
+		   endif;
+	   	endfor;
+       	    endfor %] -> region;
+    enddefine;
+

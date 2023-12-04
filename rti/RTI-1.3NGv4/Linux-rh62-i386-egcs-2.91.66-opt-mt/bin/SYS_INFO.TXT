@@ -1,0 +1,73 @@
+
+Platform Info:
+
+Hostname: aztecmystic.cs.nott.ac.uk
+Network node name: aztecmystic.cs.nott.ac.uk
+Architecture: i686 unknown
+OS: Linux 2.4.7-10
+
+Additional Platform Information:
+
+OS Release: Red Hat Linux release 7.2 (Enigma)
+
+Free space on this volume: 683 Megabytes
+
+
+Network Info:
+
+
+Interface Configuration:
+
+eth0      Link encap:Ethernet  HWaddr 00:04:76:A0:9A:A8  
+          inet addr:128.243.23.168  Bcast:128.243.23.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:1620135 errors:1 dropped:0 overruns:17 frame:1
+          TX packets:94606 errors:0 dropped:0 overruns:0 carrier:2
+          collisions:3735 txqueuelen:100 
+          RX bytes:753293863 (718.3 Mb)  TX bytes:30989929 (29.5 Mb)
+          Interrupt:11 Base address:0xdc00 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:312 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:312 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:16718 (16.3 Kb)  TX bytes:16718 (16.3 Kb)
+
+
+Network Status:
+
+
+Interfaces:
+
+Kernel Interface table
+Iface   MTU Met   RX-OK RX-ERR RX-DRP RX-OVR   TX-OK TX-ERR TX-DRP TX-OVR Flg
+eth0   1500   0 1620135      1      0     17   94606      0      0      0 BMRU
+lo    16436   0     312      0      0      0     312      0      0      0 LRU
+
+Routing Tables:
+
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+128.243.23.0    0.0.0.0         255.255.255.0   U        40 0          0 eth0
+127.0.0.0       0.0.0.0         255.0.0.0       U        40 0          0 lo
+0.0.0.0         128.243.23.1    0.0.0.0         UG       40 0          0 eth0
+
+Address Resolution Protocol Tables:
+
+cfa-gw-cs-ep (128.243.23.1) at 00:03:9F:01:54:08 [ether] on eth0
+
+
+Multicast:
+
+No Multicast Route configured.
+Multicast will use the Default Route.
+
+
+Compiler Info:
+
+Compiler Package: package egcs is not installed
+Compiler Version: egcs-2.91.66
+
+
