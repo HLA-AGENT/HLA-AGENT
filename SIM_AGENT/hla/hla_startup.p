@@ -1,11 +1,4 @@
-/* --- Copyright University of Nottingham 2002. All rights reserved. ------
- > File:            /home/bsl/pop/hla/hla_startup.p
- > Purpose:         Distributing sim_agent using the High Level Architecture
- > Author:          Brian Logan, Sep 23 2002
- > Documentation:   Public interface to the hla library.
- > Related Files:   hla/*
- > RCS Info:        $Id: pop-mode.el,v 1.22 2001/03/06 19:17:52 bsl Exp $
- */
+
 
 ;;; The steps in loading and running a distributed simulation are as follows:
 ;;; 1. load the standard sim_agent library
