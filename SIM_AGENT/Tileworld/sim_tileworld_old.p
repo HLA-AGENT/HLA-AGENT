@@ -1,11 +1,4 @@
-/* ---- Copyright University of Nottingham 2002. All rights reserved. ------
- > File:            /home/bsl/pop/sim_tileworld/sim_tileworld.p
- > Purpose:         A simple Tileworld in SIM_AGENT.
- > Author:          Michael Lees, Nov 19 2002
- > Documentation:   
- > Related Files:   
- > RCS Info:        $Id: sim_tileworld.p,v 1.5 2002/11/21 10:42:09 bsl Exp $
- */
+
 
 
 ;;;Change memory limit and load libraries
